@@ -1,0 +1,1 @@
+const s="http://localhost:3000/api",i=s.replace(/\/api\/?$/,""),a=r=>{if(!r)return"";const t=String(r).trim();return t?t.startsWith("http://")||t.startsWith("https://")||t.startsWith("data:")||t.startsWith("blob:")?t:`${i}${t.startsWith("/")?"":"/"}${t}`:""};export{a as r};

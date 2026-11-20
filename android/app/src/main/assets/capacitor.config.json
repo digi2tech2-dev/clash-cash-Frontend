@@ -1,0 +1,16 @@
+{
+	"appId": "com.adcard.app",
+	"appName": "AD CARD",
+	"webDir": "dist",
+	"server": {
+		"url": "https://www.jasser-card.com",
+		"androidScheme": "https",
+		"cleartext": false,
+		"allowNavigation": [
+			"www.jasser-card.com"
+		]
+	},
+	"android": {
+		"allowMixedContent": false
+	}
+}
