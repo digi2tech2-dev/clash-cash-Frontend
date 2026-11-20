@@ -1,0 +1,4071 @@
+.purchase-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100svh;
+  place-items: center;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  padding: max(0.85rem, env(safe-area-inset-top)) max(0.85rem, env(safe-area-inset-right)) max(0.85rem, env(safe-area-inset-bottom)) max(0.85rem, env(safe-area-inset-left));
+  touch-action: none;
+  color: #f8fbff;
+}
+
+.purchase-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(2 6 10 / 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.purchase-dialog-card {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 22.5rem);
+  max-height: min(calc(100dvh - 1.7rem), 48rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  border: 1px solid rgb(148 163 184 / 0.18);
+  border-radius: 1.45rem;
+  background: linear-gradient(180deg, rgb(11 24 30 / 0.98), rgb(6 14 18 / 0.98));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 26px 76px -42px rgb(0 0 0 / 0.9);
+  padding: 1rem;
+}
+
+.purchase-dialog-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.14;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), transparent 58%);
+  background-size: 46px 46px;
+  mask-image: linear-gradient(180deg, black, transparent 92%);
+}
+
+.purchase-dialog-close {
+  position: absolute;
+  top: 0.85rem;
+  inset-inline-end: 0.85rem;
+  z-index: 2;
+  display: inline-grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border: 1px solid rgb(148 163 184 / 0.18);
+  border-radius: 999px;
+  background: rgb(15 23 42 / 0.68);
+  color: #f8fbff;
+  box-shadow: 0 14px 26px -22px rgb(0 0 0 / 0.9);
+}
+
+.purchase-dialog-product {
+  display: grid;
+  grid-template-columns: 5.35rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  border-bottom: 1px solid rgb(148 163 184 / 0.12);
+  margin: -0.05rem -0.05rem 0.85rem;
+  padding: 0.05rem 2.4rem 0.85rem 0.05rem;
+  padding-inline-end: 2.35rem;
+}
+
+.purchase-dialog-product-visual {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.purchase-dialog-image {
+  display: grid;
+  aspect-ratio: 1 / 1;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgb(148 163 184 / 0.16);
+  border-radius: 1rem;
+  background: rgb(15 31 38 / 0.7);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+.purchase-dialog-image img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+
+.purchase-dialog-image.is-unavailable img,
+.purchase-dialog-image.is-unavailable svg {
+  opacity: 0.9;
+  filter: saturate(0.9) brightness(0.94);
+}
+
+.purchase-dialog-description {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: -0.1rem 0 0.9rem;
+  border: 1px solid rgb(56 189 248 / 0.24);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgb(14 116 144 / 0.16), rgb(15 23 42 / 0.42));
+  color: rgb(226 232 240 / 0.84);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.7;
+  padding: 0.75rem 0.8rem;
+  overflow-wrap: anywhere;
+  text-align: start;
+  white-space: normal;
+}
+
+.purchase-dialog-description p {
+  margin: 0;
+}
+
+.purchase-dialog-description-icon {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+  color: #67e8f9;
+}
+
+.purchase-dialog-product h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #f8fafc;
+  font-size: clamp(1rem, 4vw, 1.22rem);
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.purchase-dialog-product p {
+  margin: 0.2rem 0 0;
+  overflow: hidden;
+  color: rgb(203 213 225 / 0.76);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchase-dialog-product span {
+  display: inline-flex;
+  margin-top: 0.55rem;
+  border-radius: 999px;
+  padding: 0.28rem 0.62rem;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.purchase-dialog-product .is-available {
+  border: 1px solid rgb(20 184 166 / 0.22);
+  background: rgb(20 184 166 / 0.1);
+  color: #99f6e4;
+}
+
+.purchase-dialog-product .is-unavailable {
+  border: 1px solid rgb(248 113 113 / 0.3);
+  background: rgb(239 68 68 / 0.12);
+  color: #fecaca;
+}
+
+.purchase-dialog-total,
+.purchase-dialog-price-card,
+.purchase-dialog-field {
+  box-shadow: none;
+}
+
+.purchase-dialog-total span,
+.purchase-dialog-price-card span,
+.purchase-dialog-field span {
+  display: block;
+  color: rgb(203 213 225 / 0.74);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.purchase-dialog-total strong {
+  display: block;
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 0.74rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchase-dialog-price-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+
+.purchase-dialog-price-card div,
+.purchase-dialog-copy-card {
+  min-width: 0;
+  border: 1px solid rgb(148 163 184 / 0.14);
+  border-radius: 0.9rem;
+  background: rgb(15 23 42 / 0.28);
+  padding: 0.65rem 0.75rem;
+}
+
+.purchase-dialog-copy-card {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  text-align: start;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.purchase-dialog-copy-card:hover {
+  border-color: rgb(20 184 166 / 0.42);
+  background: rgb(20 184 166 / 0.12);
+  transform: translateY(-1px);
+}
+
+.purchase-dialog-copy-card svg {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  color: #2dd4bf;
+}
+
+.purchase-dialog-price-card strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 0.22rem;
+  color: #f8fafc;
+  font-size: 0.86rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchase-dialog-field {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+  padding: 0;
+}
+
+.purchase-dialog-field input {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid rgb(148 163 184 / 0.18);
+  border-radius: 0.82rem;
+  background: rgb(2 8 13 / 0.58) !important;
+  color: #ffffff !important;
+  font-size: 0.95rem;
+  font-weight: 850;
+  outline: 0;
+  padding: 0 0.85rem;
+  text-align: center;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.purchase-dialog-field input:focus {
+  border-color: rgb(20 184 166 / 0.46);
+  background: rgb(2 8 13 / 0.78) !important;
+  box-shadow: 0 0 0 3px rgb(20 184 166 / 0.1);
+}
+
+.purchase-dialog-field input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.purchase-dialog-field input[type="number"]::-webkit-inner-spin-button,
+.purchase-dialog-field input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.purchase-dialog-field input::placeholder {
+  color: rgb(226 232 240 / 0.48) !important;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.purchase-dialog-quantity-limits {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: rgb(203 213 225 / 0.66);
+  font-size: 0.66rem;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
+.purchase-dialog-quantity-limits span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.32rem;
+  color: inherit;
+  border-radius: 999px;
+  background: rgb(148 163 184 / 0.08);
+  padding: 0.18rem 0.42rem;
+}
+
+.purchase-dialog-quantity-limits strong {
+  color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.purchase-dialog-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-top: 0.7rem;
+  border-color: rgb(20 184 166 / 0.22);
+  background: rgb(8 47 48 / 0.42);
+  padding: 0.82rem 0.95rem;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    0 16px 36px -32px rgb(20 184 166 / 0.5);
+}
+
+.purchase-dialog-total strong {
+  margin-top: 0;
+  font-size: 1.05rem;
+  color: #ccfbf1;
+}
+
+.purchase-dialog-total span {
+  color: rgb(203 213 225 / 0.82);
+}
+
+.purchase-dialog-error {
+  margin-top: 0.7rem;
+  border: 1px solid rgb(248 113 113 / 0.34);
+  border-radius: 0.95rem;
+  background: rgb(127 29 29 / 0.2);
+  color: #fecaca;
+  padding: 0.72rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.purchase-dialog-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6.25rem;
+  gap: 0.58rem;
+  margin-top: 0.9rem;
+}
+
+.purchase-dialog-primary,
+.purchase-dialog-secondary {
+  min-height: 2.95rem;
+  border-radius: 0.95rem;
+  font-family: inherit;
+  font-weight: 950;
+  transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
+}
+
+.purchase-dialog-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.48rem;
+  border: 0;
+  background: linear-gradient(135deg, #0f766e, #155e75);
+  color: #f8fafc;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 18px 34px -26px rgb(20 184 166 / 0.58);
+}
+
+.purchase-dialog-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.purchase-dialog-secondary {
+  border: 1px solid rgb(148 163 184 / 0.16);
+  background: rgb(15 23 42 / 0.34);
+  color: rgb(226 232 240 / 0.78);
+  padding-inline: 1rem;
+}
+
+.purchase-dialog-primary:hover:not(:disabled),
+.purchase-dialog-secondary:hover,
+.purchase-dialog-close:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.purchase-dialog-success {
+  display: grid;
+  position: relative;
+  gap: 0.88rem;
+  overflow: hidden;
+  padding: 0.45rem 0.15rem 0;
+  text-align: center;
+  animation: purchase-dialog-success-enter 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.purchase-dialog-success::before,
+.purchase-dialog-success::after {
+  content: "";
+  position: absolute;
+  inset-inline: 10%;
+  top: 0.5rem;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgb(45 212 191 / 0.72), rgb(250 204 21 / 0.62), transparent);
+  opacity: 0.72;
+  animation: purchase-dialog-success-shine 2.8s ease-in-out infinite;
+}
+
+.purchase-dialog-success::after {
+  top: auto;
+  bottom: 0;
+  animation-delay: 900ms;
+  opacity: 0.46;
+}
+
+.purchase-dialog-success-icon {
+  display: grid;
+  width: 5.8rem;
+  height: 5.8rem;
+  margin: 0.4rem auto 0;
+  place-items: center;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(rgb(8 35 38), rgb(8 35 38)) padding-box,
+    conic-gradient(from 15deg, #14b8a6, #facc15, #22c55e, #14b8a6) border-box;
+  color: #ccfbf1;
+  box-shadow:
+    0 0 0 0 rgb(45 212 191 / 0.32),
+    0 18px 42px -26px rgb(45 212 191 / 0.9);
+  animation: purchase-dialog-success-pop 720ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both,
+    purchase-dialog-success-pulse 2.4s ease-in-out 900ms infinite;
+}
+
+.purchase-dialog-success h2 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.25rem;
+  font-weight: 950;
+  animation: purchase-dialog-success-rise 520ms ease-out 160ms both;
+}
+
+.purchase-dialog-summary {
+  display: grid;
+  gap: 0.45rem;
+  animation: purchase-dialog-success-rise 560ms ease-out 220ms both;
+}
+
+.purchase-dialog-summary-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.purchase-dialog-summary-cell {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.55rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.42rem;
+  border: 1px solid rgb(45 212 191 / 0.12);
+  border-radius: 0.9rem;
+  background: rgb(2 8 13 / 0.44);
+  padding: 0.55rem;
+  text-align: start;
+}
+
+.purchase-dialog-summary-cell.is-clickable {
+  width: 100%;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.purchase-dialog-summary-cell.is-clickable:hover {
+  transform: translateY(-1px);
+  border-color: rgb(179 122 24 / 0.36);
+  background: rgb(5 18 21 / 0.78);
+}
+
+.purchase-dialog-summary-cell > span {
+  display: grid;
+  grid-row: span 2;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
+  border-radius: 0.52rem;
+  background: rgb(45 212 191 / 0.12);
+  color: #5eead4;
+}
+
+.purchase-dialog-summary-cell p {
+  margin: 0;
+  overflow: hidden;
+  color: rgb(222 245 247 / 0.66);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchase-dialog-summary-cell strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchase-dialog-summary-row {
+  display: grid;
+  grid-template-columns: 1.9rem minmax(0, 0.82fr) minmax(0, 1.18fr);
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid rgb(240 207 122 / 0.16);
+  border-radius: 0.9rem;
+  background: rgb(3 12 14 / 0.62);
+  padding: 0.56rem;
+  text-align: start;
+}
+
+.purchase-dialog-summary-row > span {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 0.55rem;
+  background: rgb(8 127 155 / 0.14);
+  color: #f0cf7a;
+}
+
+.purchase-dialog-summary-row p {
+  margin: 0;
+  color: rgb(222 245 247 / 0.66);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.purchase-dialog-summary-row strong {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchase-dialog-success-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  animation: purchase-dialog-success-rise 560ms ease-out 280ms both;
+}
+
+.purchase-dialog-loading {
+  display: grid;
+  min-height: 18rem;
+  place-items: center;
+  align-content: center;
+  gap: 1rem;
+}
+
+.purchase-dialog-loading span {
+  width: 4.2rem;
+  height: 4.2rem;
+  border: 4px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(rgb(7 12 30), rgb(7 12 30)) padding-box,
+    conic-gradient(from 20deg, #a97812, #f0cf7a, #e2b638, #a97812) border-box;
+  animation: purchase-dialog-spin 1.1s linear infinite;
+}
+
+.purchase-dialog-loading p {
+  margin: 0;
+  color: rgb(222 245 247 / 0.72);
+  font-weight: 900;
+}
+
+:root:not(.dark) .purchase-dialog-overlay {
+  color: #102a36;
+}
+
+:root:not(.dark) .purchase-dialog-backdrop {
+  background: rgb(15 23 42 / 0.34);
+}
+
+:root:not(.dark) .purchase-dialog-card {
+  border-color: rgb(15 23 42 / 0.1);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.98), rgb(245 248 250 / 0.98));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.92),
+    0 26px 76px -46px rgb(15 23 42 / 0.46);
+}
+
+:root:not(.dark) .purchase-dialog-grid {
+  opacity: 0.22;
+  background: linear-gradient(180deg, rgb(15 23 42 / 0.04), transparent 58%);
+}
+
+:root:not(.dark) .purchase-dialog-close {
+  border-color: rgb(15 23 42 / 0.1);
+  background: rgb(255 255 255 / 0.82);
+  color: #12313d;
+  box-shadow: 0 14px 28px -22px rgb(10 42 55 / 0.42);
+}
+
+:root:not(.dark) .purchase-dialog-image {
+  border-color: rgb(15 23 42 / 0.1);
+  background: rgb(241 245 249 / 0.88);
+  color: #0f766e;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.82);
+}
+
+:root:not(.dark) .purchase-dialog-description {
+  border-color: rgb(15 23 42 / 0.08);
+  background: rgb(248 250 252 / 0.78);
+  color: rgb(51 65 85 / 0.82);
+}
+
+:root:not(.dark) .purchase-dialog-product h2,
+:root:not(.dark) .purchase-dialog-total strong,
+:root:not(.dark) .purchase-dialog-price-card strong,
+:root:not(.dark) .purchase-dialog-success h2,
+:root:not(.dark) .purchase-dialog-summary-cell strong,
+:root:not(.dark) .purchase-dialog-summary-row strong {
+  color: #102a36;
+}
+
+:root:not(.dark) .purchase-dialog-product p,
+:root:not(.dark) .purchase-dialog-total span,
+:root:not(.dark) .purchase-dialog-price-card span,
+:root:not(.dark) .purchase-dialog-field span,
+:root:not(.dark) .purchase-dialog-summary-cell p,
+:root:not(.dark) .purchase-dialog-summary-row p,
+:root:not(.dark) .purchase-dialog-loading p {
+  color: rgb(45 73 86 / 0.76);
+}
+
+:root:not(.dark) .purchase-dialog-product .is-available {
+  border-color: rgb(15 118 110 / 0.18);
+  background: rgb(20 184 166 / 0.08);
+  color: #0f766e;
+}
+
+:root:not(.dark) .purchase-dialog-product .is-unavailable {
+  border-color: rgb(220 38 38 / 0.26);
+  background: rgb(248 113 113 / 0.12);
+  color: #b91c1c;
+}
+
+:root:not(.dark) .purchase-dialog-total,
+:root:not(.dark) .purchase-dialog-price-card div,
+:root:not(.dark) .purchase-dialog-copy-card,
+:root:not(.dark) .purchase-dialog-summary-cell,
+:root:not(.dark) .purchase-dialog-summary-row {
+  border-color: rgb(15 23 42 / 0.08);
+  background: rgb(248 250 252 / 0.72);
+  box-shadow: none;
+}
+
+:root:not(.dark) .purchase-dialog-copy-card:hover {
+  border-color: rgb(15 118 110 / 0.24);
+  background: rgb(240 253 250 / 0.88);
+}
+
+:root:not(.dark) .purchase-dialog-field input {
+  border-color: rgb(15 23 42 / 0.1);
+  background: rgb(255 255 255 / 0.88) !important;
+  color: #102a36 !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+:root:not(.dark) .purchase-dialog-field input:focus {
+  border-color: rgb(15 118 110 / 0.4);
+  background: rgb(255 255 255 / 0.96) !important;
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 0.08);
+}
+
+:root:not(.dark) .purchase-dialog-field input::placeholder {
+  color: rgb(45 73 86 / 0.46) !important;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+:root:not(.dark) .purchase-dialog-quantity-limits {
+  color: rgb(45 73 86 / 0.7);
+}
+
+:root:not(.dark) .purchase-dialog-quantity-limits strong {
+  color: #102a36;
+}
+
+:root:not(.dark) .purchase-dialog-quantity-limits span {
+  background: rgb(15 23 42 / 0.04);
+}
+
+:root:not(.dark) .purchase-dialog-total {
+  border-color: rgb(15 118 110 / 0.16);
+  background: rgb(236 253 245 / 0.78);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.92),
+    0 18px 34px -32px rgb(15 118 110 / 0.24);
+}
+
+:root:not(.dark) .purchase-dialog-total strong {
+  color: #0f766e;
+}
+
+:root:not(.dark) .purchase-dialog-total span {
+  color: rgb(45 73 86 / 0.78);
+}
+
+:root:not(.dark) .purchase-dialog-secondary {
+  border-color: rgb(15 23 42 / 0.1);
+  background: rgb(255 255 255 / 0.74);
+  color: #334155;
+}
+
+:root:not(.dark) .purchase-dialog-error {
+  border-color: rgb(220 38 38 / 0.22);
+  background: rgb(254 226 226 / 0.82);
+  color: #991b1b;
+}
+
+:root:not(.dark) .purchase-dialog-success-icon,
+:root:not(.dark) .purchase-dialog-loading span {
+  background:
+    linear-gradient(rgb(248 250 252), rgb(248 250 252)) padding-box,
+    conic-gradient(from 15deg, #0f766e, #eab308, #22c55e, #0f766e) border-box;
+  color: #0f766e;
+}
+
+:root:not(.dark) .purchase-dialog-success {
+  background: transparent;
+}
+
+:root:not(.dark) .purchase-dialog-success::before,
+:root:not(.dark) .purchase-dialog-success::after {
+  background: linear-gradient(90deg, transparent, rgb(15 118 110 / 0.42), rgb(234 179 8 / 0.5), transparent);
+}
+
+:root:not(.dark) .purchase-dialog-success-icon {
+  box-shadow:
+    0 0 0 0 rgb(20 184 166 / 0.18),
+    0 18px 42px -28px rgb(15 118 110 / 0.42);
+}
+
+:root:not(.dark) .purchase-dialog-summary-cell {
+  border-color: rgb(15 118 110 / 0.1);
+  background: rgb(255 255 255 / 0.72);
+}
+
+:root:not(.dark) .purchase-dialog-summary-cell > span {
+  background: rgb(20 184 166 / 0.08);
+  color: #0f766e;
+}
+
+:root:not(.dark) .purchase-dialog-summary-cell.is-clickable:hover {
+  border-color: rgb(176 126 22 / 0.34);
+  background: rgb(246 253 255 / 0.92);
+}
+
+:root:not(.dark) .purchase-dialog-summary-cell > span,
+:root:not(.dark) .purchase-dialog-summary-row > span {
+  background: rgb(8 127 155 / 0.1);
+  color: #b07e16;
+}
+
+@keyframes purchase-dialog-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes purchase-dialog-success-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes purchase-dialog-success-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.72) rotate(-8deg);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(1.08) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes purchase-dialog-success-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgb(45 212 191 / 0.22),
+      0 18px 42px -26px rgb(45 212 191 / 0.72);
+  }
+  50% {
+    box-shadow:
+      0 0 0 0.6rem rgb(45 212 191 / 0),
+      0 18px 42px -24px rgb(250 204 21 / 0.42);
+  }
+}
+
+@keyframes purchase-dialog-success-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes purchase-dialog-success-shine {
+  0%,
+  100% {
+    transform: translateX(-12%) scaleX(0.82);
+  }
+  50% {
+    transform: translateX(12%) scaleX(1);
+  }
+}
+
+@media (max-width: 380px) {
+  .purchase-dialog-overlay {
+    padding: 0.55rem;
+  }
+
+  .purchase-dialog-card {
+    padding: 0.78rem;
+  }
+
+  .purchase-dialog-product {
+    grid-template-columns: 4.8rem minmax(0, 1fr);
+  }
+
+  .purchase-dialog-description {
+    font-size: 0.62rem;
+    padding: 0.36rem 0.4rem;
+  }
+
+  .purchase-dialog-quantity-limits {
+    font-size: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .purchase-dialog-loading span,
+  .purchase-dialog-success,
+  .purchase-dialog-success::before,
+  .purchase-dialog-success::after,
+  .purchase-dialog-success-icon,
+  .purchase-dialog-success h2,
+  .purchase-dialog-summary,
+  .purchase-dialog-success-actions {
+    animation: none;
+  }
+}
+
+/* Premium storefront treatment — follows the gold brand palette. */
+.purchase-dialog-overlay {
+  --purchase-accent: var(--color-primary, #a97812);
+  --purchase-accent-rgb: var(--color-primary-rgb, 8 127 155);
+  --purchase-pink: #f0cf7a;
+  --purchase-gold: #f2c76e;
+  color: var(--color-text, #f8fafc);
+}
+
+.purchase-dialog-backdrop {
+  background:
+    radial-gradient(circle at 50% 18%, rgb(var(--purchase-accent-rgb) / 0.22), transparent 34%),
+    radial-gradient(circle at 18% 82%, rgb(240 207 122 / 0.12), transparent 28%),
+    rgb(4 2 14 / 0.82);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.purchase-dialog-card {
+  width: min(100%, 27rem);
+  border: 1px solid transparent;
+  border-radius: 1.65rem;
+  background:
+    linear-gradient(155deg, rgb(var(--color-card-rgb) / 0.98), rgb(var(--color-surface-rgb) / 0.96)) padding-box,
+    linear-gradient(145deg, rgb(var(--purchase-accent-rgb) / 0.58), rgb(240 207 122 / 0.32), rgb(242 199 110 / 0.22)) border-box;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.09),
+    0 34px 90px -42px rgb(0 0 0 / 0.96),
+    0 18px 58px -38px rgb(var(--purchase-accent-rgb) / 0.86);
+  padding: 1.15rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--purchase-accent-rgb) / 0.4) transparent;
+}
+
+.purchase-dialog-card::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 82% 0%, rgb(240 207 122 / 0.12), transparent 28%),
+    radial-gradient(circle at 10% 42%, rgb(var(--purchase-accent-rgb) / 0.1), transparent 34%);
+}
+
+.purchase-dialog-grid {
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgb(var(--purchase-accent-rgb) / 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--purchase-accent-rgb) / 0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(180deg, black, transparent 82%);
+}
+
+.purchase-dialog-close {
+  top: 0.95rem;
+  inset-inline-end: 0.95rem;
+  border-color: rgb(var(--purchase-accent-rgb) / 0.24);
+  background: rgb(var(--color-card-rgb) / 0.82);
+  color: var(--color-text, #fff);
+  box-shadow: 0 10px 24px -16px rgb(var(--purchase-accent-rgb) / 0.9);
+  backdrop-filter: blur(12px);
+}
+
+.purchase-dialog-product {
+  grid-template-columns: 5.8rem minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+  margin: -0.15rem -0.15rem 0.9rem;
+  border-bottom: 0;
+  border-radius: 1.2rem;
+  background: linear-gradient(125deg, rgb(var(--purchase-accent-rgb) / 0.13), rgb(240 207 122 / 0.055) 60%, transparent);
+  padding: 0.7rem 2.75rem 0.7rem 0.7rem;
+  padding-inline-end: 2.75rem;
+}
+
+.purchase-dialog-image {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.26);
+  border-radius: 1.05rem;
+  background:
+    radial-gradient(circle at 50% 38%, rgb(255 255 255 / 0.1), transparent 46%),
+    rgb(var(--purchase-accent-rgb) / 0.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 18px 32px -26px rgb(var(--purchase-accent-rgb) / 0.95);
+}
+
+.purchase-dialog-product h2 {
+  background: linear-gradient(110deg, var(--color-text, #fff) 20%, #e9d5ff 58%, #fbcfe8);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-size: clamp(1.05rem, 4vw, 1.28rem);
+  letter-spacing: -0.015em;
+}
+
+.purchase-dialog-product .is-available {
+  border-color: rgb(52 211 153 / 0.28);
+  background: linear-gradient(135deg, rgb(16 185 129 / 0.15), rgb(52 211 153 / 0.07));
+  color: #a7f3d0;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+
+.purchase-dialog-description {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.16);
+  background: rgb(var(--color-card-rgb) / 0.42);
+  color: var(--color-text-secondary, rgb(226 232 240 / 0.76));
+}
+
+.purchase-dialog-field {
+  gap: 0.52rem;
+  margin-top: 0.8rem;
+}
+
+.purchase-dialog-field > span,
+.purchase-dialog-total > span,
+.purchase-dialog-price-card span {
+  color: var(--color-text-secondary, rgb(226 232 240 / 0.75));
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.purchase-dialog-field input,
+.purchase-dialog-field select {
+  min-height: 3.05rem;
+  border: 1px solid rgb(var(--purchase-accent-rgb) / 0.2) !important;
+  border-radius: 0.95rem;
+  background: rgb(var(--color-surface-rgb) / 0.66) !important;
+  color: var(--color-text, #fff) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.045),
+    0 12px 28px -28px rgb(var(--purchase-accent-rgb) / 0.8);
+}
+
+.purchase-dialog-field input:focus,
+.purchase-dialog-field select:focus {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.64) !important;
+  background: rgb(var(--color-surface-rgb) / 0.88) !important;
+  box-shadow:
+    0 0 0 3px rgb(var(--purchase-accent-rgb) / 0.12),
+    0 14px 30px -24px rgb(var(--purchase-accent-rgb) / 0.8);
+}
+
+.purchase-dialog-quantity-limits {
+  gap: 0.55rem;
+}
+
+.purchase-dialog-quantity-limits span {
+  flex: 1;
+  justify-content: space-between;
+  border: 1px solid rgb(var(--purchase-accent-rgb) / 0.11);
+  border-radius: 0.7rem;
+  background: rgb(var(--purchase-accent-rgb) / 0.065);
+  padding: 0.36rem 0.55rem;
+}
+
+.purchase-dialog-quantity-limits strong {
+  color: var(--purchase-gold);
+}
+
+.purchase-dialog-total {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  margin-top: 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 1.05rem;
+  background:
+    linear-gradient(135deg, rgb(var(--purchase-accent-rgb) / 0.2), rgb(240 207 122 / 0.12)) padding-box,
+    linear-gradient(110deg, rgb(var(--purchase-accent-rgb) / 0.64), rgb(240 207 122 / 0.5), rgb(242 199 110 / 0.46)) border-box;
+  padding: 0.9rem 1rem;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 20px 42px -30px rgb(var(--purchase-accent-rgb) / 0.85);
+}
+
+.purchase-dialog-total::after {
+  content: "";
+  position: absolute;
+  top: -100%;
+  bottom: -100%;
+  left: -25%;
+  width: 22%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.12), transparent);
+  transform: rotate(18deg);
+}
+
+.purchase-dialog-total strong {
+  color: #f5d98d;
+  font-size: 1.18rem;
+  text-shadow: 0 6px 22px rgb(242 199 110 / 0.2);
+}
+
+.purchase-dialog-total-primary,
+.purchase-dialog-usd-equivalent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.purchase-dialog-total-primary > span,
+.purchase-dialog-usd-equivalent span {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.purchase-dialog-usd-equivalent {
+  margin-top: 0.75rem;
+  border-top: 1px solid rgb(var(--purchase-accent-rgb) / 0.2);
+  padding-top: 0.75rem;
+}
+
+.purchase-dialog-usd-equivalent > div {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.purchase-dialog-usd-equivalent small {
+  color: var(--color-muted);
+  font-size: 0.58rem;
+  font-weight: 600;
+}
+
+.purchase-dialog-usd-equivalent strong {
+  border: 1px solid rgb(240 207 122 / 0.24);
+  border-radius: 0.7rem;
+  background: rgb(240 207 122 / 0.08);
+  padding: 0.38rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.purchase-dialog-actions {
+  grid-template-columns: minmax(0, 1fr) 7rem;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.purchase-dialog-primary,
+.purchase-dialog-secondary {
+  min-height: 3.15rem;
+  border-radius: 1rem;
+}
+
+.purchase-dialog-primary {
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: linear-gradient(120deg, #075a75, var(--purchase-accent) 54%, #db2777);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 20px 38px -24px rgb(var(--purchase-accent-rgb) / 0.92),
+    0 12px 28px -24px rgb(240 207 122 / 0.8);
+}
+
+.purchase-dialog-secondary {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.18);
+  background: rgb(var(--color-card-rgb) / 0.48);
+  color: var(--color-text-secondary, #cbd5e1);
+}
+
+.purchase-dialog-copy-card {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.16);
+  background: rgb(var(--purchase-accent-rgb) / 0.07);
+}
+
+.purchase-dialog-copy-card svg {
+  color: var(--purchase-pink);
+}
+
+:root:not(.dark) .purchase-dialog-backdrop {
+  background:
+    radial-gradient(circle at 50% 18%, rgb(var(--purchase-accent-rgb) / 0.2), transparent 36%),
+    rgb(35 20 58 / 0.36);
+}
+
+:root:not(.dark) .purchase-dialog-card {
+  background:
+    linear-gradient(155deg, rgb(255 255 255 / 0.99), rgb(250 247 255 / 0.98)) padding-box,
+    linear-gradient(145deg, rgb(var(--purchase-accent-rgb) / 0.45), rgb(240 207 122 / 0.28), rgb(242 199 110 / 0.28)) border-box;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.96),
+    0 34px 86px -42px rgb(48 25 75 / 0.52),
+    0 18px 52px -40px rgb(var(--purchase-accent-rgb) / 0.48);
+}
+
+:root:not(.dark) .purchase-dialog-product {
+  background: linear-gradient(125deg, rgb(var(--purchase-accent-rgb) / 0.1), rgb(240 207 122 / 0.045) 62%, transparent);
+}
+
+:root:not(.dark) .purchase-dialog-product h2 {
+  background: linear-gradient(110deg, #24113b 18%, #075a75 62%, #be185d);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+:root:not(.dark) .purchase-dialog-image {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.18);
+  background: radial-gradient(circle at 50% 38%, #fff, #f4efff);
+  color: #a97812;
+}
+
+:root:not(.dark) .purchase-dialog-field input,
+:root:not(.dark) .purchase-dialog-field select {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.16) !important;
+  background: rgb(255 255 255 / 0.88) !important;
+  color: #24113b !important;
+}
+
+:root:not(.dark) .purchase-dialog-quantity-limits span {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.1);
+  background: rgb(var(--purchase-accent-rgb) / 0.055);
+}
+
+:root:not(.dark) .purchase-dialog-quantity-limits strong {
+  color: #8a5a00;
+}
+
+:root:not(.dark) .purchase-dialog-total {
+  background:
+    linear-gradient(135deg, rgb(var(--purchase-accent-rgb) / 0.105), rgb(240 207 122 / 0.08)) padding-box,
+    linear-gradient(110deg, rgb(var(--purchase-accent-rgb) / 0.48), rgb(240 207 122 / 0.38), rgb(202 145 42 / 0.42)) border-box;
+}
+
+:root:not(.dark) .purchase-dialog-total strong {
+  color: #075a75;
+  text-shadow: none;
+}
+
+:root:not(.dark) .purchase-dialog-secondary {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.14);
+  background: rgb(255 255 255 / 0.72);
+  color: #5b486e;
+}
+
+@media (max-width: 380px) {
+  .purchase-dialog-card {
+    border-radius: 1.35rem;
+    padding: 0.78rem;
+  }
+
+  .purchase-dialog-product {
+    grid-template-columns: 4.65rem minmax(0, 1fr);
+    padding: 0.58rem 2.5rem 0.58rem 0.58rem;
+    padding-inline-end: 2.5rem;
+  }
+
+  .purchase-dialog-actions {
+    grid-template-columns: minmax(0, 1fr) 5.8rem;
+  }
+}
+
+.purchase-dialog-topup {
+  display: grid;
+  justify-items: center;
+  padding: 0.7rem 0.15rem 0.15rem;
+  text-align: center;
+}
+
+.purchase-dialog-topup-icon {
+  display: grid;
+  width: 4.6rem;
+  height: 4.6rem;
+  place-items: center;
+  border: 1px solid rgb(var(--purchase-accent-rgb) / 0.38);
+  border-radius: 1.45rem;
+  background: linear-gradient(145deg, rgb(var(--purchase-accent-rgb) / 0.24), rgb(240 207 122 / 0.12));
+  color: #e9d5ff;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    0 24px 44px -28px rgb(var(--purchase-accent-rgb) / 0.9);
+}
+
+.purchase-dialog-topup-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.85rem;
+  border: 1px solid rgb(242 199 110 / 0.3);
+  border-radius: 999px;
+  background: rgb(242 199 110 / 0.09);
+  color: #f5d98d;
+  padding: 0.3rem 0.68rem;
+  font-size: 0.7rem;
+  font-weight: 950;
+}
+
+.purchase-dialog-topup h2 {
+  margin: 0.75rem 0 0;
+  color: var(--color-text, #fff);
+  font-size: 1.3rem;
+  font-weight: 950;
+}
+
+.purchase-dialog-topup > p {
+  max-width: 22rem;
+  margin: 0.45rem 0 0;
+  color: var(--color-text-secondary, #cbd5e1);
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.75;
+}
+
+.purchase-dialog-topup-summary {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.purchase-dialog-topup-summary > div {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+  border: 1px solid rgb(var(--purchase-accent-rgb) / 0.14);
+  border-radius: 0.95rem;
+  background: rgb(var(--color-surface-rgb) / 0.55);
+  padding: 0.7rem;
+}
+
+.purchase-dialog-topup-summary .is-required {
+  grid-column: 1 / -1;
+  border-color: rgb(242 199 110 / 0.34);
+  background: linear-gradient(120deg, rgb(var(--purchase-accent-rgb) / 0.15), rgb(242 199 110 / 0.09));
+  padding-block: 0.85rem;
+}
+
+.purchase-dialog-topup-summary span {
+  color: var(--color-text-secondary, #cbd5e1);
+  font-size: 0.66rem;
+  font-weight: 850;
+}
+
+.purchase-dialog-topup-summary strong {
+  overflow: hidden;
+  color: var(--color-text, #fff);
+  font-size: 0.85rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchase-dialog-topup-summary .is-required strong {
+  color: #f5d98d;
+  font-size: 1.2rem;
+}
+
+.purchase-dialog-topup-action {
+  width: 100%;
+  margin-top: 0.85rem;
+}
+
+.purchase-dialog-topup-action strong {
+  margin-inline-start: 0.25rem;
+  border-inline-start: 1px solid rgb(255 255 255 / 0.22);
+  padding-inline-start: 0.65rem;
+  font-size: 0.78rem;
+}
+
+.purchase-dialog-topup-back {
+  width: 100%;
+  margin-top: 0.55rem;
+}
+
+:root:not(.dark) .purchase-dialog-topup-icon {
+  border-color: rgb(var(--purchase-accent-rgb) / 0.24);
+  background: linear-gradient(145deg, rgb(var(--purchase-accent-rgb) / 0.13), rgb(240 207 122 / 0.08));
+  color: #075a75;
+}
+
+:root:not(.dark) .purchase-dialog-topup-kicker,
+:root:not(.dark) .purchase-dialog-topup-summary .is-required strong {
+  color: #8a5a00;
+}
+
+:root:not(.dark) .purchase-dialog-topup-summary > div {
+  background: rgb(255 255 255 / 0.72);
+}
+
+.purchase-dialog-card.is-wallet-flow {
+  width: min(100%, 52rem);
+  max-height: calc(100dvh - 1.5rem);
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+  padding: 1rem;
+}
+
+.purchase-dialog-wallet-flow {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+  padding-top: 0.15rem;
+}
+
+.purchase-dialog-wallet-flow * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.purchase-dialog-wallet-back {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.65rem;
+  border: 1px solid rgb(var(--purchase-accent-rgb) / 0.22);
+  border-radius: 0.75rem;
+  background: rgb(var(--purchase-accent-rgb) / 0.08);
+  color: var(--color-primary);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 900;
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.purchase-dialog-wallet-back:hover {
+  background: rgb(var(--purchase-accent-rgb) / 0.14);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .purchase-dialog-card.is-wallet-flow {
+    width: 100%;
+    max-height: calc(100dvh - 0.7rem);
+    border-radius: 1.25rem;
+    padding: 0.65rem;
+  }
+}
+
+/* Purchase experience V4 — premium Clash Cash checkout, UI-only. */
+.purchase-dialog-card:not(.is-wallet-flow) {
+  width: min(100%, 30rem);
+  border-radius: 1.75rem;
+  padding: 1.15rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(115deg, rgb(255 255 255 / 0.035), transparent 34%, transparent 68%, rgb(var(--color-primary-rgb) / 0.055));
+}
+
+.purchase-dialog-product {
+  min-height: 6.8rem;
+  margin: 0 0 1rem;
+  border: 1px solid rgb(var(--color-primary-rgb) / 0.18);
+  border-radius: 1.3rem;
+  padding: 0.8rem 3rem 0.8rem 0.8rem;
+  padding-inline-end: 3rem;
+}
+
+.purchase-dialog-image {
+  border-width: 1px;
+  border-radius: 1rem;
+}
+
+.purchase-dialog-price-card {
+  margin-top: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.purchase-dialog-copy-card {
+  position: relative;
+  min-height: 4.8rem;
+  overflow: hidden;
+  border: 1px solid rgb(var(--color-primary-rgb) / 0.2);
+  border-radius: 1.15rem;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(125deg, rgb(var(--color-primary-rgb) / 0.09), rgb(var(--color-secondary-rgb) / 0.06));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.065);
+}
+
+.purchase-dialog-copy-card::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: -1.3rem;
+  top: -1.5rem;
+  width: 5rem;
+  height: 5rem;
+  border: 1rem solid rgb(var(--color-primary-rgb) / 0.045);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.purchase-dialog-copy-card strong {
+  font-size: 1rem;
+  letter-spacing: 0.045em;
+}
+
+.purchase-dialog-copy-card svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--color-primary);
+}
+
+.purchase-dialog-field {
+  position: relative;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.purchase-dialog-field > span {
+  padding-inline: 0.2rem;
+  font-size: 0.76rem;
+  letter-spacing: 0;
+}
+
+.purchase-dialog-field input,
+.purchase-dialog-field select {
+  min-height: 3.55rem;
+  border-width: 1px !important;
+  border-radius: 1rem;
+  padding-inline: 1rem;
+  font-size: 0.9rem;
+  font-weight: 750;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.purchase-dialog-field input:hover,
+.purchase-dialog-field select:hover {
+  border-color: rgb(var(--color-primary-rgb) / 0.42) !important;
+}
+
+.purchase-dialog-field input:focus,
+.purchase-dialog-field select:focus {
+  transform: translateY(-1px);
+}
+
+.purchase-dialog-quantity-limits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.purchase-dialog-quantity-limits span {
+  min-height: 2.45rem;
+  border-radius: 0.8rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.68rem;
+}
+
+.purchase-dialog-total {
+  min-height: 4.8rem;
+  margin-top: 1rem;
+  border-radius: 1.2rem;
+  padding: 1rem 1.1rem;
+}
+
+.purchase-dialog-total > span {
+  font-size: 0.75rem;
+}
+
+.purchase-dialog-total strong {
+  font-family: "Orbitron", "Poppins", sans-serif;
+  font-size: clamp(1.15rem, 4vw, 1.42rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.purchase-dialog-actions {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) 7.25rem;
+  gap: 0.7rem;
+  margin-top: 1.15rem;
+  padding-top: 1rem;
+}
+
+.purchase-dialog-actions::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--color-primary-rgb) / 0.25), transparent);
+}
+
+.purchase-dialog-primary,
+.purchase-dialog-secondary {
+  min-height: 3.6rem;
+  border-radius: 1rem;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.purchase-dialog-primary {
+  gap: 0.65rem;
+  border-color: rgb(255 237 180 / 0.3);
+  background: linear-gradient(115deg, #fff0ad 0%, #e8bd5b 34%, #a9660c 68%, #dfaa3d 100%);
+  color: #171006;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.42), 0 20px 38px -22px rgb(232 189 91 / 0.6);
+}
+
+.purchase-dialog-primary:hover:not(:disabled) {
+  filter: brightness(1.06) saturate(1.04);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.48), 0 24px 44px -22px rgb(232 189 91 / 0.76);
+}
+
+.purchase-dialog-secondary {
+  border-color: rgb(var(--color-border-rgb) / 0.72);
+  background: rgb(var(--color-card-rgb) / 0.58);
+}
+
+.purchase-dialog-error {
+  margin-top: 0.85rem;
+  border-radius: 0.9rem;
+}
+
+:root.dark .purchase-dialog-backdrop {
+  background: radial-gradient(circle at 50% 14%, rgb(232 189 91 / 0.12), transparent 34%), rgb(2 2 1 / 0.88);
+}
+
+:root.dark .purchase-dialog-card:not(.is-wallet-flow) {
+  background:
+    linear-gradient(155deg, rgb(24 21 14 / 0.99), rgb(8 7 5 / 0.985)) padding-box,
+    linear-gradient(145deg, rgb(255 226 148 / 0.46), rgb(155 92 11 / 0.48), rgb(232 189 91 / 0.2)) border-box;
+  box-shadow: inset 0 1px 0 rgb(255 244 210 / 0.07), 0 36px 96px -38px #000, 0 18px 54px -38px rgb(232 189 91 / 0.42);
+}
+
+:root.dark .purchase-dialog-product {
+  border-color: rgb(232 189 91 / 0.17);
+  background: linear-gradient(125deg, rgb(232 189 91 / 0.09), rgb(20 18 13 / 0.72) 60%, rgb(5 5 4 / 0.5));
+}
+
+:root.dark .purchase-dialog-product h2 {
+  background: linear-gradient(110deg, #fff9e9 15%, #e8bd5b 62%, #fff0ad);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+:root.dark .purchase-dialog-copy-card,
+:root.dark .purchase-dialog-field input,
+:root.dark .purchase-dialog-field select {
+  border-color: rgb(232 189 91 / 0.18) !important;
+  background: linear-gradient(135deg, rgb(30 27 19 / 0.92), rgb(12 11 8 / 0.9)) !important;
+}
+
+:root.dark .purchase-dialog-field input:focus,
+:root.dark .purchase-dialog-field select:focus {
+  border-color: rgb(232 189 91 / 0.68) !important;
+  box-shadow: 0 0 0 3px rgb(232 189 91 / 0.1), 0 16px 30px -24px rgb(232 189 91 / 0.64);
+}
+
+:root.dark .purchase-dialog-quantity-limits span {
+  border-color: rgb(232 189 91 / 0.14);
+  background: rgb(232 189 91 / 0.065);
+}
+
+:root.dark .purchase-dialog-total {
+  background:
+    linear-gradient(135deg, rgb(232 189 91 / 0.14), rgb(12 11 8 / 0.78)) padding-box,
+    linear-gradient(110deg, rgb(255 226 148 / 0.52), rgb(155 92 11 / 0.64), rgb(232 189 91 / 0.34)) border-box;
+}
+
+:root.dark .purchase-dialog-total strong,
+:root.dark .purchase-dialog-quantity-limits strong {
+  color: #f2ce78;
+}
+
+:root:not(.dark) .purchase-dialog-backdrop {
+  background: radial-gradient(circle at 50% 15%, rgb(179 122 24 / 0.12), transparent 36%), rgb(16 38 56 / 0.28);
+}
+
+:root:not(.dark) .purchase-dialog-card:not(.is-wallet-flow) {
+  background:
+    linear-gradient(155deg, #ffffff, #f8f5ec) padding-box,
+    linear-gradient(145deg, rgb(8 127 155 / 0.3), rgb(179 122 24 / 0.38), rgb(16 38 56 / 0.16)) border-box;
+  box-shadow: inset 0 1px 0 #fff, 0 34px 88px -42px rgb(16 38 56 / 0.34), 0 16px 46px -38px rgb(179 122 24 / 0.38);
+}
+
+:root:not(.dark) .purchase-dialog-product {
+  border-color: rgb(179 122 24 / 0.18);
+  background: linear-gradient(125deg, #fffaf0, rgb(232 242 245 / 0.72));
+}
+
+:root:not(.dark) .purchase-dialog-product h2 {
+  background: linear-gradient(110deg, #102638 20%, #a97812 60%, #9a650e);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+:root:not(.dark) .purchase-dialog-copy-card {
+  border-color: rgb(179 122 24 / 0.22);
+  background: linear-gradient(125deg, #fffaf0, #eef7f8);
+}
+
+:root:not(.dark) .purchase-dialog-field input,
+:root:not(.dark) .purchase-dialog-field select {
+  border-color: rgb(16 38 56 / 0.15) !important;
+  background: #fff !important;
+  color: #102638 !important;
+  box-shadow: inset 0 1px 0 #fff, 0 12px 28px -26px rgb(16 38 56 / 0.28);
+}
+
+:root:not(.dark) .purchase-dialog-field input:focus,
+:root:not(.dark) .purchase-dialog-field select:focus {
+  border-color: rgb(8 127 155 / 0.62) !important;
+  box-shadow: 0 0 0 3px rgb(8 127 155 / 0.1), 0 16px 30px -26px rgb(8 127 155 / 0.5);
+}
+
+:root:not(.dark) .purchase-dialog-quantity-limits span {
+  border-color: rgb(8 127 155 / 0.13);
+  background: rgb(8 127 155 / 0.055);
+}
+
+:root:not(.dark) .purchase-dialog-total {
+  background:
+    linear-gradient(135deg, rgb(8 127 155 / 0.1), rgb(255 250 240 / 0.92)) padding-box,
+    linear-gradient(110deg, rgb(8 127 155 / 0.44), rgb(179 122 24 / 0.52), rgb(16 38 56 / 0.2)) border-box;
+}
+
+:root:not(.dark) .purchase-dialog-total strong {
+  color: #0a627b;
+}
+
+:root:not(.dark) .purchase-dialog-primary {
+  border-color: rgb(179 122 24 / 0.3);
+  background: linear-gradient(115deg, #102638 0%, #17435c 48%, #a97812 72%, #b37a18 100%);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 20px 38px -24px rgb(16 38 56 / 0.62);
+}
+
+:root:not(.dark) .purchase-dialog-secondary {
+  border-color: rgb(16 38 56 / 0.14);
+  background: #fff;
+  color: #4e6673;
+}
+
+@media (max-width: 480px) {
+  .purchase-dialog-overlay {
+    padding: 0.35rem;
+    align-items: flex-end;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) {
+    width: 100%;
+    max-height: calc(100dvh - 0.7rem);
+    border-radius: 1.5rem 1.5rem 1.15rem 1.15rem;
+    padding: 0.85rem;
+  }
+
+  .purchase-dialog-product {
+    min-height: 5.6rem;
+    grid-template-columns: 4.7rem minmax(0, 1fr);
+    padding: 0.65rem 2.6rem 0.65rem 0.65rem;
+    padding-inline-end: 2.6rem;
+  }
+
+  .purchase-dialog-field {
+    margin-top: 0.8rem;
+  }
+
+  .purchase-dialog-field input,
+  .purchase-dialog-field select {
+    min-height: 3.25rem;
+  }
+
+  .purchase-dialog-copy-card,
+  .purchase-dialog-total {
+    min-height: 4.25rem;
+  }
+
+  .purchase-dialog-actions {
+    grid-template-columns: minmax(0, 1fr) 6.5rem;
+  }
+
+  .purchase-dialog-primary,
+  .purchase-dialog-secondary {
+    min-height: 3.35rem;
+  }
+}
+
+/* Purchase experience V7 — Clash Cash theme-native identity for light and dark modes. */
+.purchase-dialog-card:not(.is-wallet-flow) {
+  --checkout-main-rgb: var(--color-primary-rgb);
+  --checkout-accent-rgb: var(--color-accent-rgb);
+  width: min(100%, 30rem);
+  border: 1px solid rgb(var(--color-border-rgb) / 0.82);
+  background:
+    radial-gradient(circle at 50% 0%, rgb(var(--checkout-main-rgb) / 0.1), transparent 30%),
+    linear-gradient(160deg, rgb(var(--color-card-rgb) / 0.99), rgb(var(--color-bg-rgb) / 0.99));
+  color: var(--color-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), var(--shadow-medium), var(--shadow-gold);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow)::after {
+  background: linear-gradient(120deg, rgb(var(--checkout-main-rgb) / 0.04), transparent 38%, rgb(var(--checkout-accent-rgb) / 0.045));
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-grid {
+  opacity: 0.1;
+  background-image:
+    linear-gradient(rgb(var(--checkout-main-rgb) / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--checkout-main-rgb) / 0.06) 1px, transparent 1px);
+  background-size: 38px 38px;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-close {
+  border-color: rgb(var(--checkout-main-rgb) / 0.32);
+  background: rgb(var(--color-card-rgb) / 0.9);
+  color: var(--color-text);
+  box-shadow: 0 12px 25px -20px rgb(var(--checkout-main-rgb) / 0.7);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product {
+  display: flex;
+  min-height: auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.85rem;
+  border: 0;
+  padding: 0.15rem 2.6rem 0.75rem;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product-visual {
+  width: auto;
+}
+
+.purchase-dialog-brand-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.purchase-dialog-brand-visual .purchase-dialog-image,
+.purchase-dialog-platform-logo {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 4.8rem;
+  height: 4.8rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgb(var(--checkout-main-rgb) / 0.42);
+  border-radius: 1.25rem;
+  background: rgb(var(--color-card-rgb) / 0.94);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 14px 32px -22px rgb(var(--checkout-main-rgb) / 0.65);
+}
+
+.purchase-dialog-brand-visual .purchase-dialog-image {
+  transform: rotate(-2deg);
+}
+
+.purchase-dialog-platform-logo {
+  margin-inline-start: -0.55rem;
+  transform: rotate(3deg) scale(0.88);
+  border-color: rgb(var(--checkout-accent-rgb) / 0.52);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 14px 32px -20px rgb(var(--checkout-accent-rgb) / 0.68);
+}
+
+.purchase-dialog-platform-logo img {
+  position: absolute;
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+}
+
+.purchase-dialog-logo-light {
+  display: block;
+}
+
+.purchase-dialog-logo-dark {
+  display: none;
+}
+
+:root.dark .purchase-dialog-logo-light {
+  display: none;
+}
+
+:root.dark .purchase-dialog-logo-dark {
+  display: block;
+}
+
+.purchase-dialog-brand-link {
+  position: absolute;
+  z-index: 2;
+  width: 1.65rem;
+  height: 0.32rem;
+  border: 1px solid rgb(var(--color-card-rgb) / 0.9);
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgb(var(--checkout-main-rgb)), rgb(var(--checkout-accent-rgb)));
+  box-shadow: 0 0 12px rgb(var(--checkout-main-rgb) / 0.38);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product h2 {
+  padding-bottom: 0.4rem;
+  background: none;
+  color: var(--color-text);
+  font-size: clamp(1.2rem, 4vw, 1.45rem);
+  text-shadow: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product h2::after {
+  background: linear-gradient(90deg, rgb(var(--checkout-main-rgb)), rgb(var(--checkout-accent-rgb)));
+  box-shadow: 0 4px 12px -5px rgb(var(--checkout-main-rgb) / 0.75);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field {
+  border-color: rgb(var(--color-border-rgb) / 0.78);
+  background: linear-gradient(120deg, rgb(var(--color-card-rgb) / 0.96), rgb(var(--color-surface-rgb) / 0.74));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.09), var(--shadow-subtle);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card strong,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field-label,
+.purchase-dialog-summary-title {
+  color: var(--color-text);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field-label svg {
+  border-color: rgb(var(--checkout-main-rgb) / 0.32);
+  background: rgb(var(--checkout-main-rgb) / 0.08);
+  color: var(--color-primary);
+  filter: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-input-icon,
+.purchase-dialog-summary-title svg {
+  color: var(--color-primary);
+  filter: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select {
+  border-color: rgb(var(--color-border-rgb) / 0.82) !important;
+  background: rgb(var(--color-bg-rgb) / 0.74) !important;
+  color: var(--color-text) !important;
+  box-shadow: inset 0 1px 5px rgb(0 0 0 / 0.06);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input:focus,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select:focus {
+  border-color: rgb(var(--checkout-main-rgb) / 0.7) !important;
+  box-shadow: var(--shadow-focus);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits span {
+  border-color: rgb(var(--checkout-main-rgb) / 0.14);
+  background: rgb(var(--checkout-main-rgb) / 0.055);
+  color: var(--color-text-secondary);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits strong {
+  color: var(--color-primary);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total {
+  border-color: transparent;
+  background:
+    radial-gradient(circle at 8% 85%, rgb(var(--checkout-main-rgb) / 0.12), transparent 32%) padding-box,
+    linear-gradient(145deg, rgb(var(--color-card-rgb) / 0.98), rgb(var(--color-surface-rgb) / 0.9)) padding-box,
+    linear-gradient(120deg, rgb(var(--checkout-main-rgb) / 0.58), rgb(var(--checkout-accent-rgb) / 0.5)) border-box;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), var(--shadow-medium);
+}
+
+.purchase-dialog-summary-line {
+  color: var(--color-text-secondary);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-summary-line strong {
+  color: var(--color-text);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary {
+  border-color: rgb(var(--checkout-main-rgb) / 0.2);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary > strong {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+  border-color: rgb(var(--checkout-accent-rgb) / 0.24);
+  background: rgb(var(--checkout-accent-rgb) / 0.08);
+  color: var(--color-accent);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-primary {
+  border-color: rgb(var(--checkout-main-rgb) / 0.28);
+  background: linear-gradient(110deg, var(--color-primary-hover), var(--color-primary) 56%, var(--color-accent));
+  color: var(--color-button-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), var(--shadow-gold);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-secondary {
+  border-color: rgb(var(--color-border-rgb) / 0.82);
+  background: rgb(var(--color-card-rgb) / 0.78);
+  color: var(--color-text-secondary);
+}
+
+:root:not(.dark) .purchase-dialog-backdrop {
+  background: rgb(16 38 56 / 0.32);
+}
+
+:root.dark .purchase-dialog-backdrop {
+  background: rgb(3 3 2 / 0.84);
+}
+
+@media (max-width: 480px) {
+  .purchase-dialog-brand-visual .purchase-dialog-image,
+  .purchase-dialog-platform-logo {
+    width: 4.2rem;
+    height: 4.2rem;
+    border-radius: 1.05rem;
+  }
+}
+
+/* Purchase experience V6 — focused gold checkout for Clash Cash. */
+.purchase-dialog-card:not(.is-wallet-flow) {
+  --checkout-cyan: 226 182 56;
+  --checkout-violet: 169 120 18;
+  --checkout-pink: 240 203 96;
+  width: min(100%, 29rem);
+  border: 1px solid transparent;
+  border-radius: 1.65rem;
+  background:
+    linear-gradient(160deg, rgb(7 13 34 / 0.985), rgb(4 9 24 / 0.99)) padding-box,
+    linear-gradient(145deg, rgb(var(--checkout-violet) / 0.78), rgb(var(--checkout-cyan) / 0.72), rgb(var(--checkout-pink) / 0.46)) border-box;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 0 0 1px rgb(196 154 58 / 0.08),
+    0 30px 90px -38px rgb(0 0 0 / 0.95),
+    0 0 55px -30px rgb(var(--checkout-violet) / 0.72);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow)::after {
+  background:
+    radial-gradient(circle at 50% -8%, rgb(var(--checkout-violet) / 0.22), transparent 34%),
+    linear-gradient(90deg, transparent, rgb(var(--checkout-cyan) / 0.025), transparent);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-grid {
+  opacity: 0.16;
+  background-image:
+    linear-gradient(rgb(var(--checkout-cyan) / 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--checkout-violet) / 0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-close {
+  border-color: rgb(var(--checkout-violet) / 0.48);
+  background: rgb(9 16 39 / 0.92);
+  color: #f5f7ff;
+  box-shadow: 0 0 20px -8px rgb(var(--checkout-violet) / 0.8);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product {
+  display: flex;
+  min-height: auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.85rem;
+  border: 0;
+  padding: 0.15rem 2.75rem 0.8rem;
+  text-align: center;
+  background: transparent;
+  box-shadow: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product-visual {
+  width: 5.1rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-image {
+  border: 1px solid rgb(var(--checkout-cyan) / 0.52);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--checkout-violet) / 0.24), rgb(5 13 32 / 0.96) 68%);
+  box-shadow:
+    inset 0 0 20px rgb(var(--checkout-violet) / 0.2),
+    0 0 0 4px rgb(var(--checkout-violet) / 0.08),
+    0 0 28px -7px rgb(var(--checkout-cyan) / 0.85);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product h2 {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.38rem;
+  background: none;
+  color: #f8fbff;
+  font-size: 1.35rem;
+  text-shadow: 0 0 22px rgb(var(--checkout-violet) / 0.38);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product h2::after {
+  content: "";
+  position: absolute;
+  inset-inline: 18%;
+  bottom: 0;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgb(var(--checkout-cyan)), rgb(var(--checkout-violet)), rgb(var(--checkout-pink)));
+  box-shadow: 0 0 12px rgb(var(--checkout-cyan) / 0.65);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product .is-available {
+  border-color: rgb(52 211 153 / 0.36);
+  background: rgb(16 185 129 / 0.12);
+  color: #7df4c6;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-description {
+  display: flex;
+  border-color: rgb(var(--checkout-cyan) / 0.3);
+  background: linear-gradient(115deg, rgb(var(--checkout-violet) / 0.14), rgb(6 18 43 / 0.86), rgb(var(--checkout-cyan) / 0.1));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 15px 30px -28px rgb(var(--checkout-cyan) / 0.9);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-description-icon {
+  color: #a5f3fc;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field {
+  border: 1px solid rgb(var(--checkout-violet) / 0.28);
+  border-radius: 1.05rem;
+  background: linear-gradient(105deg, rgb(var(--checkout-violet) / 0.105), rgb(6 18 43 / 0.82), rgb(var(--checkout-cyan) / 0.055));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.045), 0 12px 32px -28px rgb(var(--checkout-cyan) / 0.8);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card {
+  min-height: 4.2rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+  padding: 0.72rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #eef4ff;
+  font-size: 0.78rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field-label svg {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid rgb(var(--checkout-cyan) / 0.38);
+  border-radius: 50%;
+  color: rgb(var(--checkout-cyan));
+  padding: 0.38rem;
+  filter: drop-shadow(0 0 6px rgb(var(--checkout-cyan) / 0.48));
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-input-shell {
+  position: relative;
+  min-width: 0;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-input-icon {
+  position: absolute;
+  inset-inline-end: 0.85rem;
+  top: 50%;
+  z-index: 1;
+  color: rgb(var(--checkout-cyan) / 0.82);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-input-shell input {
+  width: 100%;
+  padding-inline: 1rem 2.7rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select {
+  min-height: 3.25rem;
+  border-color: rgb(var(--checkout-cyan) / 0.24) !important;
+  border-radius: 0.85rem;
+  background: rgb(2 10 27 / 0.76) !important;
+  color: #f7f9ff !important;
+  box-shadow: inset 0 1px 8px rgb(0 0 0 / 0.28);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input:focus,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select:focus {
+  border-color: rgb(var(--checkout-cyan) / 0.76) !important;
+  box-shadow: 0 0 0 3px rgb(var(--checkout-cyan) / 0.08), 0 0 22px -10px rgb(var(--checkout-cyan));
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits {
+  gap: 0.35rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits span {
+  min-height: 1.7rem;
+  border-color: rgb(var(--checkout-cyan) / 0.13);
+  border-radius: 999px;
+  background: rgb(var(--checkout-cyan) / 0.045);
+  padding: 0.2rem 0.6rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits strong {
+  color: #72e5ff;
+  font-size: 0.68rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total {
+  margin-top: 0.7rem;
+  border-color: rgb(var(--checkout-violet) / 0.44);
+  border-radius: 1.15rem;
+  background:
+    radial-gradient(circle at 8% 82%, rgb(var(--checkout-cyan) / 0.13), transparent 30%) padding-box,
+    linear-gradient(145deg, rgb(15 27 67 / 0.96), rgb(7 18 46 / 0.96)) padding-box,
+    linear-gradient(135deg, rgb(var(--checkout-violet) / 0.7), rgb(var(--checkout-cyan) / 0.52)) border-box;
+  padding: 0.9rem 1rem;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.065), 0 0 28px -16px rgb(var(--checkout-violet) / 0.75);
+}
+
+.purchase-dialog-summary-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+  color: #f6f8ff;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.purchase-dialog-summary-title svg {
+  color: rgb(var(--checkout-cyan));
+  filter: drop-shadow(0 0 6px rgb(var(--checkout-cyan) / 0.6));
+}
+
+.purchase-dialog-summary-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.28rem 0;
+  color: rgb(220 229 250 / 0.72);
+  font-size: 0.68rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-summary-line strong {
+  color: #eef4ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary {
+  margin-top: 0.48rem;
+  border-top: 1px dashed rgb(var(--checkout-cyan) / 0.22);
+  padding-top: 0.62rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary > strong {
+  background: linear-gradient(90deg, #67e8ff, #b883ff, #f37cdf);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-size: 1.45rem;
+  text-shadow: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent {
+  border-color: rgb(var(--checkout-violet) / 0.22);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+  border-color: rgb(var(--checkout-cyan) / 0.22);
+  background: rgb(var(--checkout-cyan) / 0.07);
+  color: #bff3ff;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-actions {
+  border: 0;
+  padding-top: 0.85rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-primary {
+  border-color: rgb(var(--checkout-cyan) / 0.42);
+  background: linear-gradient(105deg, rgb(18 181 231), rgb(100 76 239) 52%, rgb(194 43 220));
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 14px 30px -17px rgb(var(--checkout-violet) / 0.95);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-secondary {
+  border-color: rgb(104 129 185 / 0.3);
+  background: rgb(5 13 32 / 0.76);
+  color: #dce6fb;
+}
+
+@media (max-width: 480px) {
+  .purchase-dialog-card:not(.is-wallet-flow) {
+    border-radius: 1.35rem 1.35rem 0.95rem 0.95rem;
+    padding: 0.75rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product {
+    display: flex;
+    min-height: auto;
+    padding: 0.1rem 2.5rem 0.55rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product-visual {
+    width: 4.25rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field {
+    padding: 0.58rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-actions {
+    grid-template-columns: minmax(0, 1fr) 5.8rem;
+  }
+}
+
+/* Purchase experience V5 — refined numeric typography and premium checkout surface. */
+.purchase-dialog-card:not(.is-wallet-flow) {
+  --purchase-number-font: "Poppins", "Cairo", ui-sans-serif, system-ui, sans-serif;
+  width: min(100%, 31rem);
+  padding: 1.25rem;
+  border-radius: 1.65rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product {
+  min-height: 7.25rem;
+  border-radius: 1.35rem;
+  background-image:
+    radial-gradient(circle at 15% 15%, rgb(244 197 84 / 0.1), transparent 35%),
+    linear-gradient(135deg, rgb(var(--color-card-rgb) / 0.88), rgb(var(--color-surface-rgb) / 0.62));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 18px 45px -38px rgb(232 189 91 / 0.55);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-image {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 14px 34px -24px rgb(232 189 91 / 0.65);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product h2 {
+  font-size: clamp(1.2rem, 4vw, 1.55rem);
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card {
+  border-radius: 1.1rem;
+  background-image: linear-gradient(120deg, rgb(var(--color-primary-rgb) / 0.12), rgb(var(--color-card-rgb) / 0.72));
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 16px 32px -28px rgb(232 189 91 / 0.7);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card strong,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits strong,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total strong {
+  font-family: var(--purchase-number-font);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  text-rendering: geometricPrecision;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card strong {
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field > span {
+  color: rgb(var(--color-text-rgb) / 0.88);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select {
+  min-height: 3.7rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 12px 30px -28px #000;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input:focus,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgb(232 189 91 / 0.11), 0 18px 38px -28px rgb(232 189 91 / 0.7);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits span {
+  min-height: 2.6rem;
+  align-items: center;
+  border-radius: 0.85rem;
+  background-image: linear-gradient(135deg, rgb(var(--color-primary-rgb) / 0.07), rgb(var(--color-card-rgb) / 0.42));
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits strong {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total {
+  min-height: auto;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  padding: 1.1rem 1.15rem;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 24px 48px -32px rgb(232 189 91 / 0.72);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary {
+  min-height: 2.65rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary > span {
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary > strong {
+  overflow: visible;
+  font-size: clamp(1.35rem, 5.5vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  text-overflow: clip;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent {
+  margin-top: 0.9rem;
+  padding-top: 0.85rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+  min-width: 7.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-actions {
+  gap: 0.75rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-primary {
+  position: relative;
+  overflow: hidden;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5), 0 22px 42px -22px rgb(232 189 91 / 0.78);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-primary::after {
+  content: "";
+  position: absolute;
+  inset-block: -80%;
+  inset-inline-start: -22%;
+  width: 18%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.3), transparent);
+  transform: rotate(18deg);
+  transition: inset-inline-start 500ms ease;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-primary:hover::after {
+  inset-inline-start: 108%;
+}
+
+@media (max-width: 480px) {
+  .purchase-dialog-card:not(.is-wallet-flow) {
+    width: 100%;
+    padding: 0.9rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product {
+    min-height: 5.9rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select {
+    min-height: 3.45rem;
+    font-size: 0.95rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary > strong {
+    font-size: clamp(1.2rem, 6vw, 1.55rem);
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+    min-width: 6.5rem;
+    font-size: 0.92rem;
+  }
+}
+
+/* Brand lockup spacing — keep product and Clash Cash identities distinct and calm. */
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-brand-visual {
+  gap: clamp(1.2rem, 5vw, 1.8rem);
+  min-width: min(100%, 13rem);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-brand-visual .purchase-dialog-image,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-platform-logo {
+  width: 4.75rem;
+  height: 4.75rem;
+  margin: 0;
+  border-radius: 1.15rem;
+  transform: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-brand-visual .purchase-dialog-image {
+  border-color: rgb(var(--checkout-main-rgb) / 0.42);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-platform-logo {
+  border-color: rgb(var(--checkout-accent-rgb) / 0.46);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-brand-link {
+  width: clamp(1.3rem, 5vw, 1.75rem);
+  height: 0.2rem;
+  border: 0;
+  opacity: 0.72;
+  box-shadow: 0 4px 12px -5px rgb(var(--checkout-main-rgb) / 0.65);
+}
+
+@media (max-width: 480px) {
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-brand-visual {
+    gap: 1.05rem;
+    min-width: 10.75rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-brand-visual .purchase-dialog-image,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-platform-logo {
+    width: 4.15rem;
+    height: 4.15rem;
+    border-radius: 1rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-brand-link {
+    width: 1.15rem;
+  }
+}
+
+/* Final purchase theme lock: one Clash Cash identity, fully driven by platform tokens. */
+.purchase-dialog-card:not(.is-wallet-flow) {
+  --checkout-main-rgb: var(--color-primary-rgb);
+  --checkout-accent-rgb: var(--color-accent-rgb);
+  border-color: rgb(var(--color-border-rgb) / 0.82);
+  background:
+    radial-gradient(circle at 50% 0%, rgb(var(--color-primary-rgb) / 0.09), transparent 32%),
+    linear-gradient(160deg, rgb(var(--color-card-rgb) / 0.99), rgb(var(--color-bg-rgb) / 0.99));
+  color: var(--color-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), var(--shadow-medium), var(--shadow-gold);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow)::after {
+  background: linear-gradient(120deg, rgb(var(--color-primary-rgb) / 0.035), transparent 42%, rgb(var(--color-accent-rgb) / 0.04));
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-grid {
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgb(var(--color-primary-rgb) / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--color-primary-rgb) / 0.06) 1px, transparent 1px);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-close {
+  border-color: rgb(var(--color-border-rgb) / 0.9);
+  background: rgb(var(--color-card-rgb) / 0.94);
+  color: var(--color-text);
+  box-shadow: var(--shadow-subtle);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product {
+  position: relative;
+  display: flex;
+  min-height: 9.25rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-bottom: 0.9rem;
+  padding: 0.65rem 4.75rem 0.85rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product-visual {
+  display: grid;
+  width: auto;
+  place-items: center;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-image {
+  display: grid;
+  width: 5.35rem;
+  height: 5.35rem;
+  margin: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid rgb(var(--color-primary-rgb) / 0.52);
+  border-radius: 50%;
+  background: rgb(var(--color-card-rgb) / 0.96);
+  box-shadow: 0 16px 34px -24px rgb(var(--color-primary-rgb) / 0.72), inset 0 0 0 4px rgb(var(--color-card-rgb) / 0.9);
+  transform: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-platform-logo {
+  position: absolute;
+  top: 1rem;
+  right: 0.35rem;
+  left: auto;
+  z-index: 2;
+  display: grid;
+  width: 3.4rem;
+  height: 3.4rem;
+  margin: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgb(var(--color-accent-rgb) / 0.42);
+  border-radius: 1rem;
+  background: rgb(var(--color-card-rgb) / 0.94);
+  box-shadow: var(--shadow-subtle);
+  transform: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-platform-logo img {
+  position: absolute;
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-brand-link,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-brand-visual {
+  display: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product h2 {
+  background: none;
+  color: var(--color-text);
+  text-shadow: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product h2::after {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  box-shadow: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field {
+  border-color: rgb(var(--color-border-rgb) / 0.82);
+  background: linear-gradient(120deg, rgb(var(--color-card-rgb) / 0.97), rgb(var(--color-surface-rgb) / 0.78));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), var(--shadow-subtle);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card strong,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field-label,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-summary-title {
+  color: var(--color-text);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field-label svg {
+  border-color: rgb(var(--color-primary-rgb) / 0.3);
+  background: rgb(var(--color-primary-rgb) / 0.08);
+  color: var(--color-primary);
+  filter: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-input-icon,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-summary-title svg {
+  color: var(--color-primary);
+  filter: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select {
+  border-color: rgb(var(--color-border-rgb) / 0.86) !important;
+  background: rgb(var(--color-bg-rgb) / 0.76) !important;
+  color: var(--color-text) !important;
+  box-shadow: inset 0 1px 5px rgb(0 0 0 / 0.06);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input:focus,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select:focus {
+  border-color: rgb(var(--color-primary-rgb) / 0.72) !important;
+  box-shadow: var(--shadow-focus);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits span {
+  border-color: rgb(var(--color-border-rgb) / 0.64);
+  background: rgb(var(--color-surface-rgb) / 0.7);
+  color: var(--color-text-secondary);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits strong {
+  color: var(--color-primary);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total {
+  border-color: transparent;
+  background:
+    radial-gradient(circle at 8% 86%, rgb(var(--color-primary-rgb) / 0.1), transparent 34%) padding-box,
+    linear-gradient(145deg, rgb(var(--color-card-rgb) / 0.98), rgb(var(--color-surface-rgb) / 0.9)) padding-box,
+    linear-gradient(120deg, rgb(var(--color-primary-rgb) / 0.5), rgb(var(--color-accent-rgb) / 0.44)) border-box;
+  color: var(--color-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.09), var(--shadow-medium);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-summary-line {
+  color: var(--color-text-secondary);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-summary-line strong {
+  color: var(--color-text);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary {
+  border-color: rgb(var(--color-primary-rgb) / 0.2);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary > strong {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent {
+  border-color: rgb(var(--color-border-rgb) / 0.72);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+  border-color: rgb(var(--color-accent-rgb) / 0.28);
+  background: rgb(var(--color-accent-rgb) / 0.08);
+  color: var(--color-accent);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-primary {
+  border-color: rgb(var(--color-primary-rgb) / 0.3);
+  background: linear-gradient(110deg, var(--color-primary-hover), var(--color-primary) 58%, var(--color-accent));
+  color: var(--color-button-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.24), var(--shadow-gold);
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-secondary {
+  border-color: rgb(var(--color-border-rgb) / 0.84);
+  background: rgb(var(--color-card-rgb) / 0.8);
+  color: var(--color-text-secondary);
+}
+
+:root:not(.dark) .purchase-dialog-backdrop {
+  background: rgb(var(--color-text-rgb) / 0.32);
+}
+
+:root.dark .purchase-dialog-backdrop {
+  background: rgb(3 3 2 / 0.84);
+}
+
+@media (max-width: 480px) {
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product {
+    min-height: 8.35rem;
+    padding-inline: 4rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-image {
+    width: 4.65rem;
+    height: 4.65rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-platform-logo {
+    top: 0.85rem;
+    right: 0.15rem;
+    left: auto;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.85rem;
+  }
+}
+
+/* Compact mobile checkout: keeps the standard purchase flow visible in one screen. */
+@media (max-width: 640px) {
+  .purchase-dialog-overlay {
+    align-items: center;
+    padding: max(0.3rem, env(safe-area-inset-top)) max(0.4rem, env(safe-area-inset-right)) max(0.3rem, env(safe-area-inset-bottom)) max(0.4rem, env(safe-area-inset-left));
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) {
+    width: min(100%, 22rem);
+    max-height: calc(100dvh - 0.6rem);
+    overflow-y: auto;
+    border-radius: 1rem;
+    padding: 0.55rem;
+    background: rgb(var(--color-card-rgb) / 0.99);
+    box-shadow: 0 16px 46px -28px rgb(0 0 0 / 0.72);
+    scrollbar-width: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow)::-webkit-scrollbar {
+    display: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow)::after,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-grid {
+    display: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-close {
+    top: 0.5rem;
+    inset-inline-end: 0.5rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    box-shadow: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-close svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: 2.7rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 0.4rem;
+    padding: 0.05rem 2.15rem 0.4rem 0.05rem;
+    border-bottom: 1px solid rgb(var(--color-border-rgb) / 0.64);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    text-align: start;
+  }
+
+  [dir="ltr"] .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product {
+    padding: 0.05rem 0.05rem 0.4rem 2.15rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-platform-logo {
+    display: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product-visual,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-image {
+    width: 2.7rem;
+    height: 2.7rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-image {
+    border-width: 1px;
+    border-radius: 0.72rem;
+    box-shadow: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product h2 {
+    display: -webkit-box;
+    overflow: hidden;
+    padding: 0;
+    font-size: 0.83rem;
+    line-height: 1.3;
+    text-align: start;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product h2::after,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product p {
+    display: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-product span {
+    margin-top: 0.18rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.58rem;
+    line-height: 1.25;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-price-card {
+    margin-top: 0;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card {
+    min-height: 2.35rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.4rem;
+    border-radius: 0.7rem;
+    padding: 0.35rem 0.5rem;
+    box-shadow: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card span,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card strong,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card svg {
+    grid-row: auto;
+    grid-column: auto;
+    margin: 0;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card span {
+    font-size: 0.6rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card strong {
+    font-size: 0.76rem;
+    text-align: center;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-copy-card svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field {
+    gap: 0.28rem;
+    margin-top: 0.38rem;
+    border-radius: 0.72rem;
+    padding: 0.38rem;
+    box-shadow: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field-label {
+    gap: 0.3rem;
+    font-size: 0.66rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field-label svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    padding: 0.22rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field select {
+    min-height: 2.25rem;
+    border-radius: 0.62rem;
+    font-size: 0.78rem;
+    padding-block: 0;
+    box-shadow: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-input-shell input {
+    padding-inline: 0.6rem 2rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-input-icon {
+    inset-inline-end: 0.65rem;
+    width: 0.82rem;
+    height: 0.82rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-field input::placeholder {
+    font-size: 0.67rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits {
+    gap: 0.3rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits span {
+    min-height: 1.35rem;
+    flex: 1;
+    justify-content: space-between;
+    border-radius: 0.5rem;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.56rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits strong {
+    font-size: 0.61rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+    margin-top: 0.38rem;
+    border: 1px solid rgb(var(--color-primary-rgb) / 0.24);
+    border-radius: 0.78rem;
+    background: rgb(var(--color-primary-rgb) / 0.055);
+    padding: 0.42rem;
+    box-shadow: none;
+  }
+
+  .purchase-dialog-summary-title {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+    font-size: 0.67rem;
+  }
+
+  .purchase-dialog-summary-title svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-summary-line {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.05rem;
+    border-radius: 0.5rem;
+    background: rgb(var(--color-card-rgb) / 0.72);
+    padding: 0.22rem 0.35rem;
+    font-size: 0.56rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-summary-line strong {
+    font-size: 0.65rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent {
+    grid-column: 1 / -1;
+    min-height: 0;
+    gap: 0.45rem;
+    margin-top: 0;
+    padding: 0.28rem 0.35rem 0;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary {
+    border-top: 1px dashed rgb(var(--color-primary-rgb) / 0.22);
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary > span,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent span {
+    font-size: 0.61rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total-primary > strong {
+    font-size: 0.9rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent small {
+    display: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font-size: 0.72rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-actions {
+    grid-template-columns: minmax(0, 1fr) 4.8rem;
+    gap: 0.4rem;
+    margin-top: 0.42rem;
+    padding-top: 0;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-primary,
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-secondary {
+    min-height: 2.3rem;
+    border-radius: 0.65rem;
+    font-size: 0.72rem;
+    box-shadow: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-primary svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-primary::after {
+    display: none;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-error {
+    margin-top: 0.35rem;
+    border-radius: 0.65rem;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.67rem;
+    line-height: 1.35;
+  }
+}
+
+/* Supporting purchase details stay available without competing with the form fields. */
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits.is-muted {
+  display: flex;
+  gap: 0.32rem;
+  margin-top: 0.38rem;
+  opacity: 0.65;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits.is-muted span {
+  min-height: 1.55rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: rgb(var(--color-text-rgb) / 0.045);
+  padding: 0.14rem 0.42rem;
+  font-size: 0.6rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-quantity-limits.is-muted strong {
+  color: var(--color-text-secondary);
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.65rem;
+  min-height: 0;
+  margin-top: 0.48rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: rgb(var(--color-text-rgb) / 0.035);
+  box-shadow: none;
+  padding: 0.48rem 0.58rem;
+  opacity: 1;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted::after {
+  display: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-summary-title {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.3rem;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.62rem;
+  font-weight: 700;
+  opacity: 0.58;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-summary-line,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-usd-equivalent {
+  display: flex;
+  grid-column: auto;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  opacity: 0.58;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted span,
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted strong {
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-shadow: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-usd-equivalent {
+  grid-column: 1 / -1;
+  order: 3;
+  gap: 0.35rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-summary-line {
+  order: 1;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-total-primary {
+  display: flex;
+  grid-column: 1 / -1;
+  order: 2;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.55rem;
+  margin: 0.05rem 0;
+  border: 1px solid rgb(var(--color-primary-rgb) / 0.34);
+  border-radius: 0.55rem;
+  background: linear-gradient(90deg, rgb(var(--color-primary-rgb) / 0.13), rgb(var(--color-accent-rgb) / 0.1));
+  padding: 0.38rem 0.55rem;
+  opacity: 1;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-total-primary > span {
+  color: var(--color-text);
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-total-primary > strong {
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-usd-equivalent small {
+  display: none;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-total.is-muted .purchase-dialog-usd-equivalent strong {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+/* Small USD equivalent row with a clear positive-value accent. */
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent {
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent span {
+  font-size: 0.66rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent small {
+  font-size: 0.52rem;
+}
+
+.purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+  min-width: auto;
+  border: 1px solid rgb(34 197 94 / 0.22);
+  border-radius: 0.55rem;
+  background: rgb(34 197 94 / 0.08);
+  color: #16a34a;
+  padding: 0.24rem 0.48rem;
+  font-size: 0.76rem;
+  line-height: 1.2;
+  box-shadow: none;
+}
+
+:root.dark .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+  color: #4ade80;
+}
+
+@media (max-width: 640px) {
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent {
+    margin-top: 0;
+    padding: 0.2rem 0.35rem 0;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent span {
+    font-size: 0.57rem;
+  }
+
+  .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+    border: 1px solid rgb(34 197 94 / 0.2);
+    background: rgb(34 197 94 / 0.07);
+    color: #16a34a;
+    padding: 0.16rem 0.38rem;
+    font-size: 0.66rem;
+  }
+
+  :root.dark .purchase-dialog-card:not(.is-wallet-flow) .purchase-dialog-usd-equivalent strong {
+    color: #4ade80;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PPD — Quantity Block (New Design)
+═══════════════════════════════════════════════════════════ */
+
+.ppd-qty-block {
+  margin-top: 0.75rem;
+  border: 1px solid rgb(99 102 241 / 0.22);
+  border-radius: 1.1rem;
+  background: linear-gradient(135deg, rgb(30 27 75 / 0.55), rgb(15 23 42 / 0.72));
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 8px 24px -16px rgb(99 102 241 / 0.4);
+}
+
+.ppd-qty-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem 0.5rem;
+  border-bottom: 1px solid rgb(99 102 241 / 0.14);
+  flex-wrap: wrap;
+}
+
+.ppd-qty-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.36rem;
+  color: rgb(199 210 254 / 0.9);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.ppd-qty-label svg {
+  color: #818cf8;
+}
+
+.ppd-qty-limits {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.ppd-qty-limit-sep {
+  width: 1px;
+  height: 1.1rem;
+  background: rgb(99 102 241 / 0.28);
+  border-radius: 999px;
+}
+
+.ppd-qty-limit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  border-radius: 999px;
+  padding: 0.18rem 0.52rem;
+  font-size: 0.64rem;
+}
+
+.ppd-qty-limit-min {
+  border: 1px solid rgb(251 191 36 / 0.22);
+  background: rgb(251 191 36 / 0.08);
+}
+
+.ppd-qty-limit-max {
+  border: 1px solid rgb(34 211 238 / 0.22);
+  background: rgb(34 211 238 / 0.07);
+}
+
+.ppd-qty-limit-key {
+  color: rgb(203 213 225 / 0.65);
+  font-weight: 700;
+}
+
+.ppd-qty-limit-min strong {
+  color: #fcd34d;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ppd-qty-limit-max strong {
+  color: #67e8f9;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ppd-qty-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ppd-qty-input-ico {
+  position: absolute;
+  inset-inline-start: 0.85rem;
+  color: #818cf8;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.ppd-qty-input {
+  width: 100%;
+  min-height: 3rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  color: #ffffff !important;
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  outline: 0;
+  padding: 0 3rem 0 2.6rem;
+  text-align: center;
+  transition: background-color 160ms ease;
+}
+
+.ppd-qty-input:focus {
+  background: rgb(99 102 241 / 0.06) !important;
+}
+
+.ppd-qty-input::placeholder {
+  color: rgb(199 210 254 / 0.32) !important;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.ppd-qty-live {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(99 102 241 / 0.32);
+  border-radius: 999px;
+  background: rgb(99 102 241 / 0.14);
+  color: #a5b4fc;
+  font-size: 0.62rem;
+  font-weight: 900;
+  padding: 0.12rem 0.48rem;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: ppd-live-in 200ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes ppd-live-in {
+  from { opacity: 0; transform: scale(0.8) translateX(4px); }
+  to   { opacity: 1; transform: scale(1) translateX(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PPD — Purchase Summary Block (New Design)
+═══════════════════════════════════════════════════════════ */
+
+.ppd-summary-block {
+  position: relative;
+  margin-top: 0.65rem;
+  border: 1px solid rgb(20 184 166 / 0.26);
+  border-radius: 1.1rem;
+  background: linear-gradient(135deg, rgb(6 44 38 / 0.72), rgb(4 30 40 / 0.82));
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 12px 32px -20px rgb(20 184 166 / 0.45);
+}
+
+.ppd-summary-block::before {
+  content: '';
+  position: absolute;
+  inset-inline: 12%;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(45 212 191 / 0.5), transparent);
+  pointer-events: none;
+}
+
+.ppd-summary-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  margin: 0.65rem 0.9rem 0;
+  border: 1px solid rgb(20 184 166 / 0.2);
+  border-radius: 999px;
+  background: rgb(20 184 166 / 0.08);
+  color: rgb(94 234 212 / 0.85);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.56rem;
+  text-transform: uppercase;
+}
+
+.ppd-summary-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.9rem 0.6rem;
+}
+
+.ppd-summary-total-label {
+  color: rgb(148 163 184 / 0.78);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.ppd-summary-total-value {
+  color: #ccfbf1;
+  font-size: 1.42rem;
+  font-weight: 950;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.ppd-summary-usd-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.9rem 0.65rem;
+  border-top: 1px solid rgb(20 184 166 / 0.14);
+}
+
+.ppd-summary-usd-label {
+  color: rgb(148 163 184 / 0.6);
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.ppd-summary-usd-value {
+  border: 1px solid rgb(74 222 128 / 0.22);
+  border-radius: 999px;
+  background: rgb(74 222 128 / 0.08);
+  color: #86efac;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0.18rem 0.56rem;
+}
+
+/* ── Light mode overrides ── */
+
+:root:not(.dark) .ppd-qty-block {
+  border-color: rgb(99 102 241 / 0.18);
+  background: linear-gradient(135deg, rgb(238 242 255 / 0.9), rgb(245 247 255 / 0.95));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 8px 24px -16px rgb(99 102 241 / 0.18);
+}
+
+:root:not(.dark) .ppd-qty-header {
+  border-bottom-color: rgb(99 102 241 / 0.1);
+}
+
+:root:not(.dark) .ppd-qty-label {
+  color: rgb(79 70 229 / 0.85);
+}
+
+:root:not(.dark) .ppd-qty-label svg {
+  color: #6366f1;
+}
+
+:root:not(.dark) .ppd-qty-input {
+  color: #1e1b4b !important;
+}
+
+:root:not(.dark) .ppd-qty-input::placeholder {
+  color: rgb(99 102 241 / 0.38) !important;
+}
+
+:root:not(.dark) .ppd-qty-limit-min {
+  border-color: rgb(245 158 11 / 0.28);
+  background: rgb(245 158 11 / 0.08);
+}
+
+:root:not(.dark) .ppd-qty-limit-max {
+  border-color: rgb(6 182 212 / 0.26);
+  background: rgb(6 182 212 / 0.07);
+}
+
+:root:not(.dark) .ppd-qty-limit-min strong {
+  color: #b45309;
+}
+
+:root:not(.dark) .ppd-qty-limit-max strong {
+  color: #0e7490;
+}
+
+:root:not(.dark) .ppd-qty-input-ico {
+  color: #6366f1;
+}
+
+:root:not(.dark) .ppd-qty-live {
+  border-color: rgb(99 102 241 / 0.26);
+  background: rgb(99 102 241 / 0.08);
+  color: #4f46e5;
+}
+
+:root:not(.dark) .ppd-summary-block {
+  border-color: rgb(15 118 110 / 0.2);
+  background: linear-gradient(135deg, rgb(236 253 245 / 0.92), rgb(240 255 254 / 0.95));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 12px 32px -20px rgb(15 118 110 / 0.18);
+}
+
+:root:not(.dark) .ppd-summary-block::before {
+  background: linear-gradient(90deg, transparent, rgb(15 118 110 / 0.3), transparent);
+}
+
+:root:not(.dark) .ppd-summary-kicker {
+  border-color: rgb(15 118 110 / 0.18);
+  background: rgb(15 118 110 / 0.07);
+  color: #0f766e;
+}
+
+:root:not(.dark) .ppd-summary-total-label {
+  color: rgb(71 85 105 / 0.8);
+}
+
+:root:not(.dark) .ppd-summary-total-value {
+  color: #0f766e;
+}
+
+:root:not(.dark) .ppd-summary-usd-row {
+  border-top-color: rgb(15 118 110 / 0.12);
+}
+
+:root:not(.dark) .ppd-summary-usd-label {
+  color: rgb(71 85 105 / 0.65);
+}
+
+:root:not(.dark) .ppd-summary-usd-value {
+  border-color: rgb(22 163 74 / 0.22);
+  background: rgb(22 163 74 / 0.07);
+  color: #15803d;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PPD — Gold Premium Overrides (Logo Colors)
+   Palette: #FFF2B5 #E9BE58 #FFD978 #B87413 #9C5E08
+   Background: #0A0906 #141008 #201D16
+═══════════════════════════════════════════════════════════ */
+
+/* ── Card shell ── */
+.purchase-dialog-card {
+  border-color: rgb(233 190 88 / 0.22);
+  background: linear-gradient(168deg, #0e0c08 2%, #090806 46%, #0d0b07 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 242 181 / 0.08),
+    0 0 0 1px rgb(156 94 8 / 0.14),
+    0 30px 80px -40px rgb(0 0 0 / 0.92);
+}
+
+.purchase-dialog-grid {
+  background: linear-gradient(180deg, rgb(233 190 88 / 0.04), transparent 55%);
+}
+
+/* ── Close button ── */
+.purchase-dialog-close {
+  border-color: rgb(233 190 88 / 0.18);
+  background: rgb(20 16 8 / 0.78);
+  color: #FFD978;
+}
+
+/* ── Product image frame ── */
+.purchase-dialog-image {
+  border-color: rgb(184 116 19 / 0.22);
+  background: rgb(18 14 8 / 0.85);
+  box-shadow: inset 0 1px 0 rgb(255 242 181 / 0.06);
+}
+
+/* ── Product name ── */
+.purchase-dialog-product h2 {
+  color: #FFF2B5;
+}
+
+.purchase-dialog-product p {
+  color: rgb(233 190 88 / 0.55);
+}
+
+/* ── Availability badge ── */
+.purchase-dialog-product .is-available {
+  border-color: rgb(233 190 88 / 0.28);
+  background: rgb(233 190 88 / 0.1);
+  color: #FFD978;
+}
+
+/* ── Description (Note Box) ── */
+.purchase-dialog-description {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.95rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgb(233 190 88 / 0.32);
+  background: linear-gradient(135deg, rgb(233 190 88 / 0.12), rgb(32 26 15 / 0.7));
+  color: #FFF2B5;
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 0 rgb(255 242 181 / 0.15),
+    0 4px 16px -8px rgb(233 190 88 / 0.25);
+}
+
+.purchase-dialog-description-icon {
+  color: #FFD978;
+  background: rgb(233 190 88 / 0.18);
+  border: 1px solid rgb(233 190 88 / 0.3);
+  padding: 0.22rem;
+  border-radius: 0.6rem;
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+/* ── Account number card ── */
+.purchase-dialog-copy-card {
+  border-color: rgb(184 116 19 / 0.2);
+  background: rgb(20 16 8 / 0.6);
+}
+
+.purchase-dialog-copy-card:hover {
+  border-color: rgb(233 190 88 / 0.42);
+  background: rgb(233 190 88 / 0.08);
+}
+
+.purchase-dialog-copy-card svg {
+  color: #E9BE58;
+}
+
+/* ── Field labels ── */
+.purchase-dialog-field span,
+.purchase-dialog-total span,
+.purchase-dialog-price-card span {
+  color: rgb(255 217 120 / 0.6);
+}
+
+/* ── Input fields ── */
+.purchase-dialog-field input {
+  border: 1.5px solid rgb(233 190 88 / 0.55);
+  border-radius: 0.85rem;
+  background: rgb(10 8 4 / 0.78) !important;
+  color: #FFF2B5 !important;
+  animation: ppd-pulse-glow 3.5s ease-in-out infinite;
+  transition: all 0.25s ease;
+}
+
+.purchase-dialog-field input:focus {
+  border-color: #FFD978;
+  background: rgb(10 8 4 / 0.92) !important;
+  animation: none;
+  box-shadow:
+    0 0 18px 2px rgb(233 190 88 / 0.65),
+    inset 0 1px 2px rgb(0 0 0 / 0.5);
+}
+
+.purchase-dialog-field input::placeholder {
+  color: rgb(233 190 88 / 0.28) !important;
+}
+
+/* ── Buy / Cancel buttons ── */
+.purchase-dialog-primary {
+  background: linear-gradient(135deg, #9C5E08, #B87413 50%, #9C5E08);
+  color: #FFF2B5;
+  box-shadow:
+    inset 0 1px 0 rgb(255 242 181 / 0.22),
+    0 18px 40px -24px rgb(156 94 8 / 0.7);
+}
+
+.purchase-dialog-secondary {
+  border-color: rgb(184 116 19 / 0.2);
+  background: rgb(20 16 8 / 0.5);
+  color: rgb(255 217 120 / 0.7);
+}
+
+/* ── Error ── */
+.purchase-dialog-error {
+  border-color: rgb(220 38 38 / 0.3);
+  background: rgb(80 12 12 / 0.35);
+  color: #fca5a5;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PPD-GOLD — Quantity + Total in ONE row
+═══════════════════════════════════════════════════════════ */
+
+.ppd-gold-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 0.7rem;
+  border: 1px solid rgb(233 190 88 / 0.24);
+  border-radius: 1.15rem;
+  background: linear-gradient(135deg, rgb(32 29 22 / 0.9), rgb(14 12 8 / 0.95));
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgb(255 242 181 / 0.07),
+    0 10px 28px -18px rgb(156 94 8 / 0.4);
+}
+
+.ppd-gold-qty,
+.ppd-gold-total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 0.6rem 0.6rem;
+  gap: 0.22rem;
+}
+
+.ppd-gold-label {
+  color: rgb(255 217 120 / 0.55);
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ppd-gold-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.5rem 0;
+  background: linear-gradient(180deg, transparent, rgb(233 190 88 / 0.35), transparent);
+}
+
+/* ── Quantity input ── */
+.ppd-gold-input {
+  width: 100%;
+  max-width: 7.5rem;
+  border: 1.5px solid rgb(233 190 88 / 0.55);
+  border-radius: 0.85rem;
+  background: rgb(20 16 9 / 0.75) !important;
+  color: #FFF2B5 !important;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 950;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  outline: 0;
+  padding: 0.32rem 0.5rem;
+  text-align: center;
+  animation: ppd-pulse-glow 3.5s ease-in-out infinite;
+  transition: all 0.25s ease;
+}
+
+.ppd-gold-input:focus {
+  border-color: #FFD978;
+  background: rgb(24 19 10 / 0.95) !important;
+  animation: none;
+  box-shadow:
+    0 0 18px 2px rgb(233 190 88 / 0.65),
+    inset 0 1px 3px rgb(0 0 0 / 0.5);
+}
+
+@keyframes ppd-pulse-glow {
+  0%, 100% {
+    border-color: rgb(233 190 88 / 0.42);
+    box-shadow:
+      0 0 8px 0px rgb(233 190 88 / 0.28),
+      inset 0 1px 2px rgb(0 0 0 / 0.4);
+  }
+  50% {
+    border-color: rgb(255 217 120 / 0.85);
+    box-shadow:
+      0 0 14px 2px rgb(233 190 88 / 0.52),
+      inset 0 1px 2px rgb(0 0 0 / 0.4);
+  }
+}
+
+.ppd-gold-input::placeholder {
+  color: rgb(233 190 88 / 0.25) !important;
+  font-weight: 800;
+}
+
+/* ── Min-Max range ── */
+.ppd-gold-range {
+  color: rgb(184 116 19 / 0.55);
+  font-size: 0.56rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* ── Total price ── */
+.ppd-gold-price {
+  color: #FFD978;
+  font-size: 1.3rem;
+  font-weight: 950;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* ── USD equivalent pill ── */
+.ppd-gold-usd {
+  display: inline-flex;
+  margin-top: 0.1rem;
+  border: 1px solid rgb(34 197 94 / 0.28);
+  border-radius: 999px;
+  background: rgb(34 197 94 / 0.1);
+  color: #4ade80;
+  font-size: 0.58rem;
+  font-weight: 900;
+  padding: 0.1rem 0.42rem;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PPD-GOLD — Light-mode overrides
+═══════════════════════════════════════════════════════════ */
+
+:root:not(.dark) .purchase-dialog-card {
+  border-color: rgb(184 116 19 / 0.14);
+  background: linear-gradient(168deg, #fffdf6 2%, #fefcf3 46%, #fdf8eb 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 0 0 1px rgb(184 116 19 / 0.08),
+    0 30px 80px -40px rgb(60 40 10 / 0.22);
+}
+
+:root:not(.dark) .purchase-dialog-grid {
+  background: linear-gradient(180deg, rgb(184 116 19 / 0.04), transparent 55%);
+}
+
+:root:not(.dark) .purchase-dialog-close {
+  border-color: rgb(184 116 19 / 0.14);
+  background: rgb(255 253 246 / 0.9);
+  color: #9C5E08;
+}
+
+:root:not(.dark) .purchase-dialog-image {
+  border-color: rgb(184 116 19 / 0.12);
+  background: rgb(254 250 238 / 0.88);
+}
+
+:root:not(.dark) .purchase-dialog-product h2 {
+  color: #4a3006;
+}
+
+:root:not(.dark) .purchase-dialog-product p {
+  color: rgb(156 94 8 / 0.55);
+}
+
+:root:not(.dark) .purchase-dialog-product .is-available {
+  border-color: rgb(156 94 8 / 0.2);
+  background: rgb(233 190 88 / 0.1);
+  color: #9C5E08;
+}
+
+:root:not(.dark) .purchase-dialog-description {
+  border-color: rgb(184 116 19 / 0.28);
+  background: linear-gradient(135deg, rgb(255 248 225 / 0.95), rgb(254 242 200 / 0.9));
+  color: #68400C;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 4px 16px -8px rgb(184 116 19 / 0.15);
+}
+
+:root:not(.dark) .purchase-dialog-description-icon {
+  color: #8C5C18;
+  background: rgb(233 190 88 / 0.2);
+  border-color: rgb(184 116 19 / 0.24);
+}
+
+:root:not(.dark) .purchase-dialog-field span,
+:root:not(.dark) .purchase-dialog-total span,
+:root:not(.dark) .purchase-dialog-price-card span {
+  color: rgb(156 94 8 / 0.6);
+}
+
+:root:not(.dark) .purchase-dialog-field input {
+  border: 1.5px solid rgb(184 116 19 / 0.45);
+  border-radius: 0.85rem;
+  background: rgb(255 253 246 / 0.92) !important;
+  color: #4a3006 !important;
+  animation: ppd-pulse-glow-light 3.5s ease-in-out infinite;
+  transition: all 0.25s ease;
+}
+
+:root:not(.dark) .purchase-dialog-field input:focus {
+  border-color: #B87413;
+  background: #ffffff !important;
+  animation: none;
+  box-shadow: 0 0 16px 2px rgb(233 190 88 / 0.5);
+}
+
+@keyframes ppd-pulse-glow-light {
+  0%, 100% {
+    border-color: rgb(184 116 19 / 0.35);
+    box-shadow: 0 0 6px 0px rgb(233 190 88 / 0.25);
+  }
+  50% {
+    border-color: rgb(184 116 19 / 0.7);
+    box-shadow: 0 0 12px 2px rgb(233 190 88 / 0.45);
+  }
+}
+
+:root:not(.dark) .purchase-dialog-field input::placeholder {
+  color: rgb(156 94 8 / 0.35) !important;
+}
+
+:root:not(.dark) .purchase-dialog-primary {
+  background: linear-gradient(135deg, #B87413, #9C5E08);
+  color: #FFF2B5;
+  box-shadow:
+    inset 0 1px 0 rgb(255 242 181 / 0.3),
+    0 18px 40px -24px rgb(156 94 8 / 0.4);
+}
+
+:root:not(.dark) .purchase-dialog-secondary {
+  border-color: rgb(184 116 19 / 0.14);
+  background: rgb(255 253 246 / 0.8);
+  color: #9C5E08;
+}
+
+:root:not(.dark) .purchase-dialog-copy-card {
+  border-color: rgb(184 116 19 / 0.12);
+  background: rgb(255 250 235 / 0.7);
+}
+
+:root:not(.dark) .purchase-dialog-copy-card:hover {
+  border-color: rgb(184 116 19 / 0.3);
+  background: rgb(255 248 225 / 0.85);
+}
+
+:root:not(.dark) .purchase-dialog-copy-card svg {
+  color: #B87413;
+}
+
+:root:not(.dark) .ppd-gold-row {
+  border-color: rgb(184 116 19 / 0.18);
+  background: linear-gradient(135deg, rgb(255 250 235 / 0.92), rgb(254 248 225 / 0.95));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 10px 28px -18px rgb(156 94 8 / 0.14);
+}
+
+:root:not(.dark) .ppd-gold-label {
+  color: rgb(156 94 8 / 0.55);
+}
+
+:root:not(.dark) .ppd-gold-divider {
+  background: linear-gradient(180deg, transparent, rgb(184 116 19 / 0.24), transparent);
+}
+
+:root:not(.dark) .ppd-gold-input {
+  border: 1.5px solid rgb(184 116 19 / 0.45);
+  background: rgb(255 253 246 / 0.95) !important;
+  color: #4a3006 !important;
+  animation: ppd-pulse-glow-light 3.5s ease-in-out infinite;
+}
+
+:root:not(.dark) .ppd-gold-input:focus {
+  border-color: #B87413;
+  background: #ffffff !important;
+  animation: none;
+  box-shadow: 0 0 16px 2px rgb(233 190 88 / 0.5);
+}
+
+:root:not(.dark) .ppd-gold-input::placeholder {
+  color: rgb(156 94 8 / 0.22) !important;
+}
+
+:root:not(.dark) .ppd-gold-range {
+  color: rgb(156 94 8 / 0.42);
+}
+
+:root:not(.dark) .ppd-gold-price {
+  color: #9C5E08;
+}
+
+:root:not(.dark) .ppd-gold-usd {
+  border-color: rgb(22 163 74 / 0.22);
+  background: rgb(22 163 74 / 0.08);
+  color: #15803d;
+}
+
+:root:not(.dark) .purchase-dialog-error {
+  border-color: rgb(220 38 38 / 0.2);
+  background: rgb(254 226 226 / 0.85);
+  color: #991b1b;
+}
