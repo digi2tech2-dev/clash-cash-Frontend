@@ -221,9 +221,9 @@ const Header = ({ toggleSidebar }) => {
                 className="justify-center"
                 iconClassName="h-14 w-24 scale-100 sm:h-16 sm:w-28"
               />
-              <span className="flex shrink-0 flex-col items-start leading-none text-[var(--color-primary)]" aria-label={platformName}>
-                <span className="text-sm font-black tracking-[0.12em] sm:text-base">{brandNameTop.toUpperCase()}</span>
-                {brandNameBottom && <span className="mt-1 text-[0.62rem] font-extrabold tracking-[0.28em] sm:text-xs">{brandNameBottom.toUpperCase()}</span>}
+              <span className="flex min-w-[4.5rem] shrink-0 flex-col items-center justify-center leading-none text-[var(--color-primary)]" aria-label={platformName}>
+                <span className="text-[0.9rem] font-extrabold tracking-[0.1em] sm:text-base" style={{ fontFamily: 'Orbitron, Poppins, sans-serif' }}>{brandNameTop.toUpperCase()}</span>
+                {brandNameBottom && <span className="mt-1.5 text-[0.52rem] font-medium tracking-[0.38em] text-[var(--color-text-secondary)] sm:text-[0.6rem]" style={{ fontFamily: 'Poppins, sans-serif' }}>{brandNameBottom.toUpperCase()}</span>}
               </span>
             </button>
           </div>
