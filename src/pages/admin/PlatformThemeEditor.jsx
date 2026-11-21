@@ -30,16 +30,24 @@ const freeFonts = { arabic: ['Cairo', 'Tajawal'], english: ['Inter', 'Arial'] };
 const fonts = { arabic: [...freeFonts.arabic, 'Noto Sans Arabic', 'Almarai', 'Changa', 'IBM Plex Sans Arabic', 'Rubik', 'Aref Ruqaa', 'Aref Ruqaa Ink', 'Noto Kufi Arabic', 'El Messiri'],
   english: [...freeFonts.english, 'Roboto', 'Poppins', 'Montserrat', 'Outfit', 'Plus Jakarta Sans'] };
 const sampleColors = {
-  light: { primary: '#2563EB', secondary: '#475569', accent: '#F59E0B', background: '#FFFFFF', surface: '#F8FAFC', text: '#0F172A', mutedText: '#475569', border: '#CBD5E1' },
-  dark: { primary: '#60A5FA', secondary: '#A78BFA', accent: '#FBBF24', background: '#0F172A', surface: '#1E293B', text: '#F8FAFC', mutedText: '#CBD5E1', border: '#475569' },
+  light: { primary: '#A97812', secondary: '#806020', accent: '#C28D1C', background: '#FFFCF4', surface: '#FFF7E3', text: '#2B2414', mutedText: '#665A3C', border: '#EAD8A8' },
+  dark: { primary: '#E2B638', secondary: '#C49A3A', accent: '#F0CB60', background: '#15120A', surface: '#211B0D', text: '#FFF9E8', mutedText: '#DFD2A9', border: '#65532A' },
 };
-const samplePart = (mode) => ({ presetId: 'classic', colors: { ...sampleColors[mode] },
-  typography: { arabicFont: 'Cairo', englishFont: 'Inter', baseSize: 16, headingWeight: 700 },
+const sampleChromePart = (mode) => ({ template: 'bar', height: 64, width: 100,
+  background: mode === 'dark' ? '#211B0D' : '#FFF7E3',
+  foreground: mode === 'dark' ? '#FFF9E8' : '#2B2414',
+  accent: sampleColors[mode].primary, radius: 0 });
+const sampleChromeModes = Object.fromEntries(['light', 'dark'].map((mode) => [mode, {
+  header: sampleChromePart(mode), bottomNav: { ...sampleChromePart(mode), background: mode === 'dark' ? '#15120A' : '#FFF7E3' },
+}]));
+const sampleChrome = { header: sampleChromeModes.light.header, bottomNav: sampleChromeModes.light.bottomNav, modes: sampleChromeModes };
+const samplePart = (mode) => ({ presetId: 'warm', colors: { ...sampleColors[mode] },
+  typography: { arabicFont: 'Cairo', englishFont: 'Poppins', baseSize: 16, headingWeight: 700 },
   buttons: { radius: 8, style: 'solid' }, cards: { radius: 12, shadow: 'subtle' }, navigation: { style: 'standard' }, neon: sampleNeon() });
 const DEFAULT_MARQUEE_AR = 'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ ﴿قُلْ إِنَّ رَبِّي يَبْسُطُ الرِّزْقَ لِمَنْ يَشَاءُ مِنْ عِبَادِهِ وَيَقْدِرُ لَهُ وَمَا أَنْفَقْتُمْ مِنْ شَيْءٍ فَهُوَ يُخْلِفُهُ وَهُوَ خَيْرُ الرَّازِقِينَ﴾ صَدَقَ اللَّهُ الْعَظِيمُ';
 const sampleTheme = { schemaVersion: 2, modes: { light: samplePart('light'), dark: samplePart('dark') },
   brand: { platformName: 'Clash Cash', logoPath: null, logoWidth: 144, slides: [null, null, null, null, null], marqueeTextArabic: DEFAULT_MARQUEE_AR, targetBannerPath: null, socialMedia: { phone: '', whatsapp: '', instagram: '', facebook: '' }, sidebarTemplate: 'default', sidebarMetrics: { width: 270, height: 100, radius: 28 } },
-  chrome: { header: { template: 'bar', height: 64, width: 100, background: '#FFFFFF', foreground: '#0F172A', accent: '#2563EB', radius: 0 }, bottomNav: { template: 'bar', height: 64, width: 100, background: '#FFFFFF', foreground: '#0F172A', accent: '#2563EB', radius: 0 } } };
+  chrome: sampleChrome };
 const headerLooks = [
   { name: 'Midnight edge', ar: 'مستطيل منتصف الليل', config: { template: 'bar', height: 64, width: 100, background: '#111827', foreground: '#F8FAFC', accent: '#38BDF8', radius: 0 } },
   { name: 'Violet float', ar: 'عائم بنفسجي', config: { template: 'floating', height: 72, width: 90, background: '#312E81', foreground: '#F5F3FF', accent: '#C4B5FD', radius: 24 } },
@@ -731,7 +739,9 @@ export default function PlatformThemeEditor({ previewOnly = false }) {
       setHistory(historyResult.status === 'fulfilled' ? historyResult.value?.items || [] : []);
       setPartial(historyResult.status === 'rejected');
       if (!keepDraft) {
-        const nextDraft = current?.draft || current?.published || options[0]?.configuration || null;
+        // Starting a theme for the first time must match the site's existing
+        // gold palette. A preset is only applied after the admin chooses one.
+        const nextDraft = current?.draft || current?.published || structuredClone(sampleTheme);
         setDraft(nextDraft ? { ...nextDraft, brand: { ...sampleTheme.brand, ...nextDraft.brand,
           socialMedia: { ...sampleTheme.brand.socialMedia, ...nextDraft.brand?.socialMedia } } } : null);
       }
@@ -760,8 +770,28 @@ export default function PlatformThemeEditor({ previewOnly = false }) {
     return { ...current, modes: { ...current.modes, [mode]: { ...appearance,
       neon: { ...neon, categoryCards: { ...categoryCards, [categoryId]: { ...effect, ...change } } } } } };
   });
-  const choosePreset = (entry) => setDraft((current) => ({ ...current,
-    modes: structuredClone(entry.configuration.modes), chrome: structuredClone(entry.configuration.chrome || current.chrome), layout: structuredClone(entry.configuration.layout || current.layout), brand: { ...current.brand, ...entry.configuration.brand, platformName: current.brand.platformName, logoPath: current.brand.logoPath, slides: current.brand.slides, targetBannerPath: current.brand.targetBannerPath, marqueeTextArabic: current.brand.marqueeTextArabic } }));
+  const choosePreset = (entry) => setDraft((current) => {
+    const modes = Object.fromEntries(['light', 'dark'].map((value) => [value, {
+      ...structuredClone(entry.configuration.modes[value]),
+      colors: { ...current.modes[value].colors },
+    }]));
+    const chromeModes = Object.fromEntries(['light', 'dark'].map((value) => [value,
+      Object.fromEntries(['header', 'bottomNav'].map((section) => {
+        const next = getThemeChrome(entry.configuration, section, value) || sampleChromeModes[value][section];
+        const existing = getThemeChrome(current, section, value) || sampleChromeModes[value][section];
+        return [section, { ...structuredClone(next), background: existing.background,
+          foreground: existing.foreground, accent: existing.accent }];
+      })),
+    ]));
+    return { ...current, modes,
+      chrome: { ...structuredClone(entry.configuration.chrome || current.chrome),
+        header: chromeModes.light.header, bottomNav: chromeModes.light.bottomNav, modes: chromeModes },
+      layout: structuredClone(entry.configuration.layout || current.layout),
+      brand: { ...current.brand, ...entry.configuration.brand, platformName: current.brand.platformName,
+        logoPath: current.brand.logoPath, slides: current.brand.slides,
+        targetBannerPath: current.brand.targetBannerPath, marqueeTextArabic: current.brand.marqueeTextArabic },
+    };
+  });
   const needsPro = draft && (Object.values(draft.modes).some((appearance) =>
     presets.find((item) => item.id === appearance.presetId)?.tier === 'THEME_PRO'
     || !freeFonts.arabic.includes(appearance.typography.arabicFont)
