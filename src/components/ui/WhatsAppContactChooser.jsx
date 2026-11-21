@@ -14,11 +14,13 @@ const WhatsAppContactChooser = ({ isOpen, onClose, message = '', isArabic = true
     if (isOpen) void loadPaymentSettings({ force: true });
   }, [isOpen, loadPaymentSettings]);
   const contacts = resolveSupportContacts(paymentSettings?.supportContacts);
-  const visibleContacts = contacts.length ? contacts : [{
+  const visibleContacts = contacts.length ? contacts.map((contact, index) => index === 0
+    ? { ...contact, number: getDefaultWhatsAppNumber() }
+    : contact) : [{
     id: 'support-default',
     name: isArabic ? 'خدمة العملاء' : 'Customer support',
     role: '',
-    number: paymentSettings?.whatsappNumber || getDefaultWhatsAppNumber(),
+    number: getDefaultWhatsAppNumber(),
   }];
 
   return (

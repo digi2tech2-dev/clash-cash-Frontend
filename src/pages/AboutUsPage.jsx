@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -10,8 +10,7 @@ import HeaderBrand from '../components/layout/HeaderBrand';
 import PublicSidebar from '../components/layout/PublicSidebar';
 import SiteCopyrightFooter from '../components/layout/SiteCopyrightFooter';
 import { useBodyScrollLock } from '../utils/bodyScrollLock';
-import useSystemStore from '../store/useSystemStore';
-import { buildWhatsAppLink, resolveSupportContacts } from '../utils/whatsapp';
+import { buildWhatsAppLink, getDefaultWhatsAppNumber, SUPPORT_WHATSAPP_DISPLAY } from '../utils/whatsapp';
 import { usePlatformBrand } from '../context/ThemeContext';
 
 const AboutUsPage = () => {
@@ -20,10 +19,7 @@ const AboutUsPage = () => {
   const { i18n } = useTranslation();
   const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const paymentSettings = useSystemStore((state) => state.paymentSettings);
-  const loadPaymentSettings = useSystemStore((state) => state.loadPaymentSettings);
-  const primaryContact = resolveSupportContacts(paymentSettings?.supportContacts)[0];
-  useEffect(() => { void loadPaymentSettings({ force: true }); }, [loadPaymentSettings]);
+  const primaryContactNumber = getDefaultWhatsAppNumber();
 
   const isArabic = String(i18n.resolvedLanguage || i18n.language || 'ar').toLowerCase().startsWith('ar');
   useBodyScrollLock(isMenuOpen);
@@ -131,7 +127,7 @@ const AboutUsPage = () => {
       />
 
       <main className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        {primaryContact?.number && <div className="mx-auto mb-4 max-w-5xl text-center"><a className="inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-[var(--color-text)]" href={buildWhatsAppLink({ number: primaryContact.number })} target="_blank" rel="noopener noreferrer">{isArabic ? 'خدمة العملاء' : 'Customer support'}: <span dir="ltr" className="mx-2">{primaryContact.number}</span></a></div>}
+        <div className="mx-auto mb-4 max-w-5xl text-center"><a className="inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-[var(--color-text)]" href={buildWhatsAppLink({ number: primaryContactNumber })} target="_blank" rel="noopener noreferrer">{isArabic ? 'خدمة العملاء' : 'Customer support'}: <span dir="ltr" className="mx-2">{SUPPORT_WHATSAPP_DISPLAY}</span></a></div>
         <div className="mx-auto mb-3 flex max-w-5xl justify-start">
           <button
             type="button"

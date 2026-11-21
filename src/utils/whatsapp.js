@@ -1,5 +1,5 @@
-export const SUPPORT_WHATSAPP_NUMBER = '201067836859';
-export const SUPPORT_WHATSAPP_DISPLAY = '+20 106 783 6859';
+export const SUPPORT_WHATSAPP_NUMBER = '201064920750';
+export const SUPPORT_WHATSAPP_DISPLAY = '+20 10 64920750';
 
 export const normalizeWhatsAppNumber = (value) => {
   const digits = String(value || '').replace(/\D/g, '');

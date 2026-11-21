@@ -1,19 +1,12 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import { StoreSocialLinks } from './SidebarSocialFooter';
 import { usePlatformBrand } from '../../context/ThemeContext';
-import useSystemStore from '../../store/useSystemStore';
-import { buildWhatsAppLink, resolveSupportContacts } from '../../utils/whatsapp';
+import { buildWhatsAppLink, getDefaultWhatsAppNumber } from '../../utils/whatsapp';
 
 const SiteCopyrightFooter = ({ isArabic, showEngineerContact = true, showSocialLinks = false }) => {
   const { platformName } = usePlatformBrand();
-  const paymentSettings = useSystemStore((state) => state.paymentSettings);
-  const loadPaymentSettings = useSystemStore((state) => state.loadPaymentSettings);
-  const primaryContact = resolveSupportContacts(paymentSettings?.supportContacts)[0];
-  const contactUrl = buildWhatsAppLink({ number: primaryContact?.number });
-  useEffect(() => {
-    if (showEngineerContact) void loadPaymentSettings({ force: true });
-  }, [loadPaymentSettings, showEngineerContact]);
+  const contactUrl = buildWhatsAppLink({ number: getDefaultWhatsAppNumber() });
   return (
   <footer className="mx-auto w-full max-w-[var(--shell-max-width)] px-3 pb-6 sm:px-4 md:px-6 lg:px-8">
     <div className="relative overflow-hidden rounded-[1.45rem] border border-[color:rgb(var(--color-border-rgb)/0.72)] bg-[linear-gradient(135deg,rgb(var(--color-card-rgb)/0.82),rgb(var(--color-elevated-rgb)/0.58))] px-4 py-4 text-center shadow-[var(--shadow-subtle)] backdrop-blur-xl">
