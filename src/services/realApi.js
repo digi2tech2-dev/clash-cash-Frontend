@@ -12,6 +12,7 @@
 
 import axios from 'axios';
 import { devLogger } from '../utils/devLogger';
+import { prepareTargetAppImage } from '../utils/targetAppImage';
 import { getWalletBalanceSummary } from '../utils/money';
 import { isSiteWalletPaymentMethod, normalizePaymentGroups } from '../utils/paymentSettings';
 import {
@@ -1324,7 +1325,7 @@ const isFileLike = (value) => (
   || (typeof Blob !== 'undefined' && value instanceof Blob)
 );
 
-const buildTargetAppFormData = (payload = {}, { partial = false } = {}) => {
+const buildTargetAppFormData = async (payload = {}, { partial = false } = {}) => {
   const formData = new FormData();
   if (!partial || payload.name !== undefined) appendIfPresent(formData, 'name', String(payload.name || '').trim());
   if (!partial || payload.targetAccountId !== undefined || payload.receivingAccountId !== undefined) {
@@ -1340,7 +1341,7 @@ const buildTargetAppFormData = (payload = {}, { partial = false } = {}) => {
   if (payload.isActive !== undefined) formData.append('isActive', String(payload.isActive !== false));
   const image = payload.imageFile || payload.file || payload.image;
   if (isFileLike(image)) {
-    formData.append('image', image);
+    formData.append('image', await prepareTargetAppImage(image));
   } else if (typeof image === 'string' && image && !image.startsWith('data:') && !/^https?:\/\//i.test(image)) {
     formData.append('image', image);
   }
@@ -4098,14 +4099,14 @@ const realApi = {
     },
 
     create: async (payload = {}) => {
-      const formData = buildTargetAppFormData(payload);
+      const formData = await buildTargetAppFormData(payload);
       const res = await http.post('/admin/target-apps', formData);
       const data = unwrap(res);
       return normaliseTargetApp(data?.app || data);
     },
 
     update: async (id, payload = {}) => {
-      const formData = buildTargetAppFormData(payload, { partial: true });
+      const formData = await buildTargetAppFormData(payload, { partial: true });
       const res = await http.patch(`/admin/target-apps/${id}`, formData);
       const data = unwrap(res);
       return normaliseTargetApp(data?.app || data);
@@ -4119,6 +4120,12 @@ const realApi = {
   },
 
   targetPurchases: {
+    listPage: async (params = {}) => {
+      const res = await http.get('/admin/targets', { params });
+      const data = unwrap(res);
+      const items = Array.isArray(data) ? data : (data?.orders || data?.requests || data?.items || []);
+      return { orders: items.map(normaliseTargetOrder), pagination: res.data?.pagination, summary: res.data?.summary };
+    },
     list: async (params = {}) => {
       const res = await http.get('/admin/targets', { params });
       const data = unwrap(res);

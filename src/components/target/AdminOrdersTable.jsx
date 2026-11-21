@@ -10,6 +10,7 @@ import {
   normalizeTargetOrderStatus,
 } from '../../utils/targetOrders';
 import { isSiteWalletPaymentMethod } from '../../utils/paymentSettings';
+import { resolveImageUrl } from '../../utils/imageUrl';
 
 const copyText = (value) => {
   const text = String(value || '').trim();
@@ -35,7 +36,7 @@ const MobileRequestCard = ({ request, onStatusChange, onViewDetails, canConfirm 
     name: request.paymentMethodName || request.paymentMethodNameSnapshot || request.paymentMethod,
     type: request.paymentMethodTypeSnapshot,
   });
-  const proofUrl = request.screenshotProof || request.proofImage;
+  const proofUrl = resolveImageUrl(request.screenshotProof || request.proofImage || '');
 
   return (
     <article className="overflow-hidden rounded-[1.25rem] border border-indigo-500/15 bg-[linear-gradient(145deg,rgb(var(--color-card-rgb)/0.98),rgb(var(--color-elevated-rgb)/0.78))] shadow-[0_18px_45px_-38px_rgb(99_102_241/0.55)]">
@@ -106,7 +107,7 @@ const MobileRequestCard = ({ request, onStatusChange, onViewDetails, canConfirm 
             value={normalizedStatus}
             onChange={(event) => onStatusChange(request.id, event.target.value)}
             className={`${selectClassName} h-10 rounded-xl px-3 py-1.5 text-xs`}
-            disabled={!canConfirm}
+            disabled={!canConfirm || normalizedStatus !== 'PENDING'}
           >
             <option value="PENDING">قيد الانتظار</option>
             <option value="APPROVED">قبول</option>
@@ -143,7 +144,7 @@ const AdminOrdersTable = ({ requests = [], onStatusChange, onViewDetails, canCon
       ))}
       {!requests.length ? (
         <div className="rounded-[1.25rem] border border-dashed border-indigo-500/20 p-8 text-center text-sm text-[var(--color-text-secondary)]">
-          لا توجد طلبات تارجت حتى الآن.
+          لا توجد طلبات مطابقة للبحث أو الحالة المحددة.
         </div>
       ) : null}
     </div>
@@ -227,7 +228,7 @@ const AdminOrdersTable = ({ requests = [], onStatusChange, onViewDetails, canCon
             <TableCell>
               {request.screenshotProof || request.proofImage ? (
                 <a
-                  href={request.screenshotProof || request.proofImage}
+                  href={resolveImageUrl(request.screenshotProof || request.proofImage)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-[color:rgb(var(--color-primary-rgb)/0.28)] px-3 py-1.5 text-xs font-bold text-[var(--color-primary)] transition hover:bg-[color:rgb(var(--color-primary-rgb)/0.08)]"
@@ -249,7 +250,7 @@ const AdminOrdersTable = ({ requests = [], onStatusChange, onViewDetails, canCon
                   value={normalizedStatus}
                   onChange={(event) => onStatusChange(request.id, event.target.value)}
                   className={cnStatusSelect}
-                  disabled={!canConfirm}
+                  disabled={!canConfirm || normalizedStatus !== 'PENDING'}
                 >
                   <option value="PENDING">قيد الانتظار</option>
                   <option value="APPROVED">قبول</option>
@@ -277,7 +278,7 @@ const AdminOrdersTable = ({ requests = [], onStatusChange, onViewDetails, canCon
         {!requests.length && (
           <TableRow>
             <TableCell colSpan={10} className="py-10 text-center text-[var(--color-text-secondary)]">
-              لا توجد طلبات تارجت حتى الآن.
+              لا توجد طلبات مطابقة للبحث أو الحالة المحددة.
             </TableCell>
           </TableRow>
         )}

@@ -2585,6 +2585,13 @@ const mockApi = {
   },
 
   targetPurchases: {
+    listPage: async ({ page = 1, limit = 20, status, search = '' } = {}) => {
+      const all = await mockApi.targetPurchases.list();
+      const summary = { totalOrders: all.length, pendingCount: all.filter((r) => String(r.status).toUpperCase() === 'PENDING').length, approvedCount: all.filter((r) => String(r.status).toUpperCase() === 'APPROVED').length, rejectedCount: all.filter((r) => String(r.status).toUpperCase() === 'REJECTED').length };
+      const term = String(search).trim().toLowerCase();
+      const filtered = all.filter((r) => (!status || String(r.status).toUpperCase() === status) && (!term || [r.id, r.appNameSnapshot, r.userName, r.userEmail, r.senderId, r.transferNumber, r.transactionNumber].some((value) => String(value || '').toLowerCase().includes(term))));
+      return { orders: filtered.slice((page - 1) * limit, page * limit), pagination: { page, limit, total: filtered.length, pages: Math.ceil(filtered.length / limit) }, summary };
+    },
     list: async () => {
       await new Promise(resolve => setTimeout(resolve, DELAY));
       const db = getDB('target-purchases-storage', { state: { requests: [] } });

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowUpLeft, Boxes, CheckCircle2, ClipboardList, Target } from 'lucide-react';
+import { Boxes, CheckCircle2, ClipboardList, Target, RefreshCw, Search } from 'lucide-react';
 import AdminOrdersTable from '../../components/target/AdminOrdersTable';
 import AdminProducts from '../../components/target/AdminProducts';
 import RejectionReasonModal from '../../components/target/RejectionReasonModal';
 import TargetOrderDetailsModal from '../../components/target/TargetOrderDetailsModal';
 import Button from '../../components/ui/Button';
-import Modal from '../../components/ui/Modal';
+import apiClient from '../../services/client';
 import useTargetStore from '../../store/useTargetStore';
 import useAuthStore from '../../store/useAuthStore';
 import useSystemStore from '../../store/useSystemStore';
@@ -22,7 +22,6 @@ const AdminTargetRequests = () => {
     updateProduct,
     deleteProduct,
     loadApps,
-    loadRequests,
     updateRequestStatus,
   } = useTargetStore();
   const { paymentSettings, loadPaymentSettings } = useSystemStore();
@@ -30,15 +29,36 @@ const AdminTargetRequests = () => {
   const { addToast } = useToast();
   const [rejectingRequest, setRejectingRequest] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [isRequestsPanelOpen, setIsRequestsPanelOpen] = useState(false);
+  const [requestPage, setRequestPage] = useState(1);
+  const [requestStatus, setRequestStatus] = useState('');
+  const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
+  const [pageData, setPageData] = useState({ pagination: {}, summary: {} });
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [requestError, setRequestError] = useState('');
+  const [requestRevision, setRequestRevision] = useState(0);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const canConfirmTargetRequests = hasPermission(actor, PERMISSIONS.CONFIRM_TARGET_REQUESTS);
 
   useEffect(() => {
-    void loadApps({ includeInactive: true });
-    void loadRequests({ page: 1, limit: 100 });
-    void loadPaymentSettings({ force: true });
-  }, [loadApps, loadRequests, loadPaymentSettings]);
+    void loadApps({ includeInactive: true }).catch(() => addToast('تعذر تحميل تطبيقات التارجت.', 'error'));
+    void loadPaymentSettings({ force: true }).catch(() => addToast('تعذر تحميل وسائل الاستلام.', 'error'));
+  }, [loadApps, loadPaymentSettings]);
+
+  useEffect(() => {
+    let active = true;
+    setLoadingRequests(true);
+    setRequestError('');
+    apiClient.targetPurchases.listPage({ page: requestPage, limit: 20, ...(requestStatus ? { status: requestStatus } : {}), ...(appliedSearch ? { search: appliedSearch } : {}) })
+      .then((result) => {
+        if (!active) return;
+        useTargetStore.setState({ requests: result.orders });
+        setPageData(result);
+      })
+      .catch(() => { if (active) setRequestError('تعذر تحميل الطلبات. حاول مرة أخرى.'); })
+      .finally(() => { if (active) setLoadingRequests(false); });
+    return () => { active = false; };
+  }, [requestPage, requestStatus, appliedSearch, requestRevision]);
 
   const paymentMethods = getTargetPaymentMethods(paymentSettings);
 
@@ -49,7 +69,7 @@ const AdminTargetRequests = () => {
       addToast('تم إنشاء تطبيق التارجت بنجاح.', 'success');
       return true;
     } catch (error) {
-      addToast(error?.message || 'تعذرت إضافة تطبيق التارجت.', 'error');
+      addToast(error?.status === 413 ? 'حجم صورة التطبيق أكبر من المسموح به على الخادم. اختر صورة أصغر وحاول مرة أخرى.' : (error?.message || 'تعذرت إضافة تطبيق التارجت.'), 'error');
       return false;
     }
   };
@@ -61,14 +81,18 @@ const AdminTargetRequests = () => {
       addToast('تم تحديث تطبيق التارجت بنجاح.', 'success');
       return true;
     } catch (error) {
-      addToast(error?.message || 'تعذر تحديث تطبيق التارجت.', 'error');
+      addToast(error?.status === 413 ? 'حجم صورة التطبيق أكبر من المسموح به على الخادم. اختر صورة أصغر وحاول مرة أخرى.' : (error?.message || 'تعذر تحديث تطبيق التارجت.'), 'error');
       return false;
     }
   };
 
   const handleDeleteProduct = async (id) => {
-    await deleteProduct(id);
-    addToast('تم تعطيل تطبيق التارجت.', 'success');
+    try {
+      await deleteProduct(id);
+      addToast('تم تعطيل تطبيق التارجت.', 'success');
+    } catch (error) {
+      addToast(error?.message || 'تعذر تعطيل تطبيق التارجت.', 'error');
+    }
   };
 
   const handleStatusChange = async (id, status, payload = {}) => {
@@ -97,6 +121,7 @@ const AdminTargetRequests = () => {
     setIsStatusUpdating(true);
     try {
       const updated = await updateRequestStatus(id, status, { rejectionReason: '', ...payload });
+      setRequestRevision((value) => value + 1);
       setSelectedRequest((current) => (String(current?.id) === String(id) ? { ...current, ...updated } : current));
       addToast(
         String(status).toUpperCase() === 'APPROVED' && walletPayout
@@ -118,14 +143,17 @@ const AdminTargetRequests = () => {
       const updated = await updateRequestStatus(rejectingRequest.id, 'REJECTED', { adminNotes: reason, rejectionReason: reason });
       setSelectedRequest((current) => (String(current?.id) === String(rejectingRequest.id) ? { ...current, ...updated } : current));
       setRejectingRequest(null);
+      setRequestRevision((value) => value + 1);
       addToast('تم رفض طلب التارجت.', 'success');
+    } catch (error) {
+      addToast(error?.message || 'تعذر رفض الطلب. حاول مرة أخرى.', 'error');
     } finally {
       setIsStatusUpdating(false);
     }
   };
 
-  const pendingCount = requests.filter((request) => String(request.status).toUpperCase() === 'PENDING').length;
-  const completedCount = requests.filter((request) => String(request.status).toUpperCase() === 'APPROVED').length;
+  const pendingCount = pageData.summary?.pendingCount || 0;
+  const completedCount = pageData.summary?.approvedCount || 0;
 
   return (
     <div className="min-w-0 space-y-4 text-[var(--color-text)] sm:space-y-5">
@@ -178,7 +206,7 @@ const AdminTargetRequests = () => {
             <div className="min-w-0">
               <h2 className="text-sm font-black text-[var(--color-text)] sm:text-base">طلبات التارجت</h2>
               <p className="mt-0.5 text-[11px] leading-5 text-[var(--color-text-secondary)] sm:text-xs">
-                افتح الطلبات في خانة مستقلة لمراجعة التحويلات والإثباتات بدون ازدحام الصفحة.
+                راجع التحويلات والإثباتات وحالة كل طلب من القائمة أدناه.
               </p>
             </div>
           </div>
@@ -192,35 +220,20 @@ const AdminTargetRequests = () => {
               <CheckCircle2 className="h-3.5 w-3.5" />
               {formatNumber(completedCount, 'en-US')} مقبولة
             </span>
-            <Button type="button" variant="secondary" className="h-9 rounded-xl border-indigo-500/25 bg-indigo-500/10 px-3 text-xs text-indigo-500 hover:border-indigo-500/40 hover:bg-indigo-500/15" onClick={() => setIsRequestsPanelOpen(true)}>
-              فتح الطلبات
-              <ArrowUpLeft className="h-3.5 w-3.5" />
+            <Button type="button" variant="secondary" className="h-9 rounded-xl border-indigo-500/25 bg-indigo-500/10 px-3 text-xs text-indigo-500 hover:border-indigo-500/40 hover:bg-indigo-500/15" onClick={() => document.getElementById('target-orders')?.scrollIntoView({ behavior: 'smooth' })}>
+              عرض الطلبات
             </Button>
           </div>
         </div>
       </section>
 
-      <AdminProducts
-        products={products}
-        paymentMethods={paymentMethods}
-        onAdd={handleAddProduct}
-        onUpdate={handleUpdateProduct}
-        onDelete={handleDeleteProduct}
-      />
-
-      <Modal
-        isOpen={isRequestsPanelOpen}
-        onClose={() => setIsRequestsPanelOpen(false)}
-        title="طلبات التارجت"
-        size="xl"
-        className="z-[240]"
-        placement="bottom"
-      >
+      <section id="target-orders" className="scroll-mt-24 rounded-[1.4rem] border border-[var(--color-border)] bg-[var(--color-card)] p-3.5 sm:p-5">
         <div className="space-y-3 sm:space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="text-lg font-black">طلبات التارجت</h2><p className="mt-1 text-xs text-[var(--color-text-secondary)]">راجع التحويلات ووسيلة الاستلام وتفاصيل كل طلب.</p></div><Button type="button" variant="secondary" size="sm" disabled={loadingRequests} onClick={() => setRequestRevision((value) => value + 1)}><RefreshCw className="h-4 w-4" /> تحديث</Button></div>
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-xl border border-sky-500/15 bg-sky-500/[0.06] p-2.5 text-center">
               <p className="text-[9px] text-[var(--color-text-secondary)] sm:text-[10px]">كل الطلبات</p>
-              <p className="mt-1 text-lg font-black leading-none text-sky-500">{formatNumber(requests.length, 'en-US')}</p>
+              <p className="mt-1 text-lg font-black leading-none text-sky-500">{formatNumber(pageData.summary?.totalOrders || 0, 'en-US')}</p>
             </div>
             <div className="rounded-xl border border-amber-500/15 bg-amber-500/[0.06] p-2.5 text-center">
               <p className="text-[9px] text-[var(--color-text-secondary)] sm:text-[10px]">قيد المراجعة</p>
@@ -232,17 +245,26 @@ const AdminTargetRequests = () => {
             </div>
           </div>
 
+          <form className="flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); setRequestPage(1); setAppliedSearch(search.trim()); }}>
+            <label className="relative min-w-0 flex-1"><span className="sr-only">البحث في الطلبات</span><Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-secondary)]" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ابحث بالعميل أو التطبيق أو رقم التحويل" className="h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-10 text-sm text-[var(--color-text)]" /></label>
+            <select aria-label="حالة الطلب" value={requestStatus} onChange={(event) => { setRequestPage(1); setRequestStatus(event.target.value); }} className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)]"><option value="">كل الحالات</option><option value="PENDING">قيد المراجعة</option><option value="APPROVED">مقبولة</option><option value="REJECTED">مرفوضة</option></select>
+            <Button type="submit" size="sm" className="h-11">بحث</Button>
+          </form>
+
           <div className="lg:rounded-[1.25rem] lg:border lg:border-[color:rgb(var(--color-border-rgb)/0.78)] lg:bg-[color:rgb(var(--color-card-rgb)/0.72)] lg:p-2">
-            <AdminOrdersTable
+            {loadingRequests ? <p role="status" className="py-10 text-center text-sm text-[var(--color-text-secondary)]">جارٍ تحميل الطلبات...</p> : requestError ? <p role="alert" className="py-10 text-center text-sm text-[var(--color-error)]">{requestError}</p> : <AdminOrdersTable
               requests={requests}
               onStatusChange={handleStatusChange}
               onViewDetails={(request) => setSelectedRequest(request)}
-              canConfirm={canConfirmTargetRequests}
+              canConfirm={canConfirmTargetRequests && !isStatusUpdating}
               showHeader={false}
-            />
+            />}
           </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--color-text-secondary)]"><span>الطلبات المطابقة: {formatNumber(pageData.pagination?.total || 0, 'en-US')}</span><div className="flex items-center gap-2"><Button type="button" variant="secondary" size="sm" disabled={loadingRequests || requestPage <= 1} onClick={() => setRequestPage((page) => page - 1)}>السابق</Button><span>صفحة {requestPage} من {Math.max(1, pageData.pagination?.pages || 0)}</span><Button type="button" variant="secondary" size="sm" disabled={loadingRequests || requestPage >= (pageData.pagination?.pages || 1)} onClick={() => setRequestPage((page) => page + 1)}>التالي</Button></div></div>
         </div>
-      </Modal>
+      </section>
+
+      <AdminProducts products={products} paymentMethods={paymentMethods} onAdd={handleAddProduct} onUpdate={handleUpdateProduct} onDelete={handleDeleteProduct} />
 
       <RejectionReasonModal
         isOpen={Boolean(rejectingRequest)}
