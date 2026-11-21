@@ -358,6 +358,12 @@ http.interceptors.response.use(
     const unauthorized = isTokenAuthError(error);
     const skipAuthHandling = isPublicAuthRequest(originalRequest?.url);
 
+    if (!skipAuthHandling && error?.response?.data?.code === 'ACCOUNT_BLOCKED') {
+      forceLogoutAndRedirect('blocked');
+      if (typeof window !== 'undefined') window.location.assign('/auth/account-rejected');
+      return Promise.reject(wrapHttpError(error));
+    }
+
     if (unauthorized && !skipAuthHandling) {
       const refreshToken = getStoredRefreshToken();
       const canRetryWithRefresh = !refreshUnsupported && Boolean(refreshToken) && !originalRequest._retryWithRefresh;
@@ -1300,6 +1306,9 @@ const normaliseTargetOrder = (order = {}) => {
     transferFromId: order.senderId || order.playerId || order.transferFromId || '',
     screenshotProof: resolveImageUrl(order.screenshotProof || order.proofImage || ''),
     proofImage: resolveImageUrl(order.screenshotProof || order.proofImage || ''),
+    payoutProof: resolveImageUrl(order.payoutProof || order.payoutReceipt || ''),
+    payoutAmount: order.payoutAmount == null ? null : Number(order.payoutAmount),
+    payoutCurrency: String(order.payoutCurrency || '').toUpperCase(),
     status,
     ...orderUser,
   };
@@ -1910,6 +1919,13 @@ const realApi = {
     login: async (email, password) => {
       const res = await http.post('/auth/login', { email, password });
       const data = unwrap(res);
+      if (data?.requiresProfileCompletion || data?.status === 'PROFILE_COMPLETION_REQUIRED') {
+        return {
+          requiresProfileCompletion: true,
+          completionToken: data.completionToken || '',
+          user: data.user ? normaliseUser(data.user) : null,
+        };
+      }
       if (data?.requires2FA || data?.requiresTwoFactor) {
         const tempToken = data.tempToken || data.twoFactorToken || data.sessionId || data.requestId || null;
         return {
@@ -1917,6 +1933,7 @@ const realApi = {
           tempToken,
           twoFactorToken: tempToken,
           email: data.email || null,
+          demoCode: data.demoCode || null,
           user: data.user ? normaliseUser(data.user) : null,
         };
       }
@@ -1971,12 +1988,24 @@ const realApi = {
           ...(referralCode ? { referralCode } : {}),
         });
         const data = unwrap(res);
+        if (data?.requires2FA || data?.requiresTwoFactor) {
+          const tempToken = data.tempToken || data.twoFactorToken || null;
+          return {
+            requires2FA: true,
+            tempToken,
+            twoFactorToken: tempToken,
+            email: data.email || null,
+            demoCode: data.demoCode || null,
+          };
+        }
         if (String(data?.status || '').toUpperCase() === 'PROFILE_COMPLETION_REQUIRED') {
           return {
             user: data?.user ? normaliseUser(data.user) : null,
             token: null,
             completionToken: data.completionToken,
             status: 'profile_completion_required',
+            country: data?.user?.country || '',
+            currency: data?.user?.currency || '',
             redirectTo: '/auth?status=PROFILE_COMPLETION_REQUIRED',
             canAccessApp: false,
           };
@@ -2003,6 +2032,16 @@ const realApi = {
       // We keep it compatible by parsing the token from the current URL if present.
       const params = new URLSearchParams(window.location.search);
       const rawCallbackStatus = String(params.get('status') || '').trim().toUpperCase();
+      if (rawCallbackStatus === 'TWO_FACTOR_REQUIRED') {
+        const tempToken = params.get('tempToken') || params.get('twoFactorToken');
+        if (!tempToken) throw new Error('The two-factor sign-in session is missing. Please sign in again.');
+        return {
+          requires2FA: true,
+          tempToken,
+          twoFactorToken: tempToken,
+          email: params.get('email') || null,
+        };
+      }
       const callbackStatus = normalizeAccountStatus(rawCallbackStatus);
       const completionToken = params.get('completionToken') || params.get('completion_token');
       if (rawCallbackStatus === 'OAUTH_ERROR') {
@@ -2016,6 +2055,8 @@ const realApi = {
           completionToken,
           status: 'profile_completion_required',
           callbackStatus: 'PROFILE_COMPLETION_REQUIRED',
+          country: params.get('country') || '',
+          currency: params.get('currency') || '',
           redirectTo: '/auth?status=PROFILE_COMPLETION_REQUIRED',
           canAccessApp: false,
         };
@@ -2050,13 +2091,23 @@ const realApi = {
       return { user, token, status: 'login_complete', callbackStatus: rawCallbackStatus || 'LOGIN_COMPLETE' };
     },
 
-    completeGoogleProfile: async ({ completionToken, country, currency }) => {
+    completeGoogleProfile: async ({ completionToken, country, currency, phone }) => {
       const res = await http.post('/auth/google/complete-profile', {
         completionToken,
         country,
         currency,
+        phone,
       });
       const data = unwrap(res);
+      if (data?.requires2FA || data?.requiresTwoFactor) {
+        const tempToken = data.tempToken || data.twoFactorToken || null;
+        return {
+          requires2FA: true,
+          tempToken,
+          twoFactorToken: tempToken,
+          email: data.email || null,
+        };
+      }
       const user = normaliseUser(data.user);
       const token = data.token || data.accessToken || null;
       const refreshToken = data.refreshToken ?? data.refresh_token ?? null;
@@ -2073,6 +2124,22 @@ const realApi = {
         success: true,
         message: data?.message || res?.data?.message || 'If that email exists, a verification link has been sent.',
       };
+    },
+
+    requestPasswordReset: async (email) => {
+      const res = await http.post('/auth/forgot-password', {
+        email: String(email || '').trim(),
+      });
+      const data = unwrap(res);
+      return {
+        success: true,
+        message: data?.message || res?.data?.message || 'If that email exists, a password reset link has been sent.',
+      };
+    },
+
+    resetPassword: async ({ token, password }) => {
+      const res = await http.post('/auth/reset-password', { token, password });
+      return unwrap(res);
     },
 
     register: async (userData) => {
@@ -3166,6 +3233,7 @@ const realApi = {
       if (updates.balance !== undefined) body.balance = Number(updates.balance);
       if (updates.currentBalance !== undefined) body.currentBalance = Number(updates.currentBalance);
       if (updates.isApiEnabled !== undefined) body.isApiEnabled = Boolean(updates.isApiEnabled);
+      if (updates.referralEnabled !== undefined) body.referralEnabled = Boolean(updates.referralEnabled);
 
       const isSelf = actorContext?.id === userId;
       const url = isSelf ? '/users/me' : `/admin/users/${userId}`;
@@ -3580,13 +3648,18 @@ const realApi = {
      * @param {string}  [params.startDate] - ISO date string (from)
      * @param {string}  [params.endDate]   - ISO date string (to)
      */
-    listPaginated: async ({ page = 1, limit = 100, status, search, userId, startDate, endDate } = {}) => {
+    listProviders: async () => {
+      const res = await http.get('/admin/orders/providers');
+      return (unwrap(res)?.providers || []).map(normaliseProvider);
+    },
+    listPaginated: async ({ page = 1, limit = 100, status, search, userId, startDate, endDate, providerCode } = {}) => {
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('limit', String(limit));
       if (status && status !== 'all') params.set('status', status);
       if (search && String(search).trim()) params.set('search', String(search).trim());
       if (userId && String(userId).trim()) params.set('userId', String(userId).trim());
+      if (providerCode) params.set('providerCode', providerCode);
       if (startDate) params.set('from', startDate);
       if (endDate) params.set('to', endDate);
 
@@ -4085,10 +4158,17 @@ const realApi = {
       const body = normalizedStatus === 'rejected'
         ? { adminNotes: payload.adminNotes ?? payload.rejectionReason ?? payload.reason ?? '' }
         : {};
+      const approvalBody = normalizedStatus === 'approved' && payload.payoutProof
+        ? (() => {
+            const formData = new FormData();
+            formData.append('payoutProof', payload.payoutProof);
+            return formData;
+          })()
+        : body;
       const pendingBody = { status: 'PENDING' };
 
       const requests = endpoint
-        ? [{ url: endpoint, body }]
+        ? [{ url: endpoint, body: normalizedStatus === 'approved' ? approvalBody : body }]
         : [
             { url: `/admin/targets/${id}/status`, body: pendingBody },
             { url: `/admin/targets/${id}`, body: pendingBody },

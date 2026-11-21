@@ -122,6 +122,7 @@ const pickPersistedUser = (user) => {
     availableCredit: walletSummary.availableCredit,
     availableBalance: walletSummary.availableBalance,
     isApiEnabled: Boolean(user.isApiEnabled),
+    referralEnabled: Boolean(user.referralEnabled),
     referralCode: user.referralCode || user.inviteCode || '',
     inviteCode: user.inviteCode || user.referralCode || '',
     referralCount: user.referralCount ?? user.referralsCount ?? 0,
@@ -196,6 +197,24 @@ const useAuthStore = create((set, get) => ({
         });
         try {
           const response = await apiClient.auth.login(email, password);
+          if (response?.requiresProfileCompletion) {
+            const completionUser = response.user || null;
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false,
+              blockedStatus: null,
+              blockedUser: null,
+              profileLastLoadedAt: 0,
+            });
+            return {
+              ok: true,
+              requiresProfileCompletion: true,
+              completionToken: response.completionToken || '',
+              user: completionUser,
+            };
+          }
           if (response?.requires2FA) {
             set({
               user: null,
@@ -211,6 +230,7 @@ const useAuthStore = create((set, get) => ({
               requires2FA: true,
               tempToken: response.tempToken || response.twoFactorToken,
               twoFactorToken: response.tempToken || response.twoFactorToken,
+              demoCode: response.demoCode || null,
               user: response.user || null,
               canAccessApp: false,
             };
@@ -311,6 +331,26 @@ const useAuthStore = create((set, get) => ({
         });
         try {
           const response = await apiClient.auth.loginWithGoogle();
+          if (response?.requires2FA) {
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false,
+              blockedStatus: null,
+              blockedUser: null,
+              profileLastLoadedAt: 0,
+            });
+            return {
+              ok: true,
+              requires2FA: true,
+              tempToken: response.tempToken || response.twoFactorToken,
+              twoFactorToken: response.tempToken || response.twoFactorToken,
+              email: response.email || null,
+              demoCode: response.demoCode || null,
+              canAccessApp: false,
+            };
+          }
           if (response?.status === 'profile_completion_required' || response?.completionToken) {
             set({
               user: null,
@@ -326,6 +366,9 @@ const useAuthStore = create((set, get) => ({
               ok: true,
               status: 'profile_completion_required',
               completionToken: response.completionToken,
+              user: response.user || null,
+              country: response.country || response.user?.country || '',
+              currency: response.currency || response.user?.currency || '',
               redirectTo: response.redirectTo || '/auth?status=PROFILE_COMPLETION_REQUIRED',
               canAccessApp: false,
             };
@@ -406,10 +449,28 @@ const useAuthStore = create((set, get) => ({
         }
       },
 
-      completeGoogleProfile: async ({ completionToken, country, currency }) => {
+      completeGoogleProfile: async ({ completionToken, country, currency, phone }) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.auth.completeGoogleProfile({ completionToken, country, currency });
+          const response = await apiClient.auth.completeGoogleProfile({ completionToken, country, currency, phone });
+          if (response?.requires2FA) {
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false,
+              blockedStatus: null,
+              blockedUser: null,
+              profileLastLoadedAt: 0,
+            });
+            return {
+              ok: true,
+              requires2FA: true,
+              tempToken: response.tempToken || response.twoFactorToken,
+              twoFactorToken: response.tempToken || response.twoFactorToken,
+              email: response.email || null,
+            };
+          }
           const outcome = buildAuthOutcome(response.user);
 
           set({
@@ -525,6 +586,10 @@ const useAuthStore = create((set, get) => ({
           return { ok: false, error: formattedError };
         }
       },
+
+      requestPasswordReset: async (email) => apiClient.auth.requestPasswordReset(email),
+
+      resetPassword: async ({ token, password }) => apiClient.auth.resetPassword({ token, password }),
 
       logout: async () => {
         profileRefreshRequest = null;

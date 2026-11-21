@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import {
   MessageCircleMore,
   House,
@@ -8,7 +8,6 @@ import {
   LogIn,
   Store,
   UserPlus,
-  Code2,
 } from 'lucide-react';
 import { cn } from '../ui/Button';
 import HeaderBrand from './HeaderBrand';
@@ -28,7 +27,6 @@ const GoogleMark = () => (
 const PublicSidebar = ({ isOpen, onClose, onLogin, onHome, onAbout, onContact, onCreateAccount, onGoogleLogin, isBusy, isArabic }) => {
   const [isMobile, setIsMobile] = useState(false);
   const { pathname } = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -52,12 +50,6 @@ const PublicSidebar = ({ isOpen, onClose, onLogin, onHome, onAbout, onContact, o
       label: isArabic ? 'من نحن' : 'About us',
       onClick: onAbout,
       isActive: pathname === '/about-us',
-    },
-    {
-      icon: Code2,
-      label: isArabic ? 'تم الإنشاء بواسطة' : 'Created By',
-      onClick: () => navigate('/created-by'),
-      isActive: pathname === '/created-by',
     },
     {
       icon: MessageCircleMore,

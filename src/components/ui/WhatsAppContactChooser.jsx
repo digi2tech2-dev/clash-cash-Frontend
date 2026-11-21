@@ -14,9 +14,7 @@ const WhatsAppContactChooser = ({ isOpen, onClose, message = '', isArabic = true
     if (isOpen) void loadPaymentSettings({ force: true });
   }, [isOpen, loadPaymentSettings]);
   const contacts = resolveSupportContacts(paymentSettings?.supportContacts);
-  const visibleContacts = contacts.length ? contacts.map((contact, index) => index === 0
-    ? { ...contact, number: getDefaultWhatsAppNumber() }
-    : contact) : [{
+  const visibleContacts = contacts.length ? contacts : [{
     id: 'support-default',
     name: isArabic ? 'خدمة العملاء' : 'Customer support',
     role: '',

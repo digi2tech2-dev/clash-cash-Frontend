@@ -122,12 +122,16 @@ const TwoFactorCard = ({ email, twoFactorEnabled = false, emailChangedPending = 
     setFeedback({ type: 'info', message: '' });
 
     try {
-      await apiClient.auth.generateTwoFactor();
+      const result = await apiClient.auth.generateTwoFactor();
       setIsConfirmingEnable(true);
       setEnableCode('');
       setStatus(STATUS.DISABLED);
-      setFeedback({ type: 'success', message: text.codeSentMessage });
-      addToast(text.codeSentMessage, 'success');
+      const demoCodeMessage = result?.demoCode
+        ? (isEnglish ? ` Demo verification code: ${result.demoCode}` : ` كود التجربة: ${result.demoCode}`)
+        : '';
+      const message = `${text.codeSentMessage}${demoCodeMessage}`;
+      setFeedback({ type: 'success', message });
+      addToast(message, 'success');
     } catch (error) {
       const message = getReadableErrorMessage(error, text.enableError, { language });
       setStatus(STATUS.ERROR);

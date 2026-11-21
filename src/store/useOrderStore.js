@@ -105,10 +105,10 @@ const useOrderStore = create((set, get) => ({
        * Fetch admin orders with server-side pagination.
        * Does NOT use the regular orders cache — admin has its own state slice.
        */
-      loadAdminOrders: async ({ page = 1, limit = ADMIN_ORDERS_DEFAULT_LIMIT, status, search, userId, startDate, endDate } = {}) => {
+      loadAdminOrders: async ({ page = 1, limit = ADMIN_ORDERS_DEFAULT_LIMIT, status, search, userId, startDate, endDate, providerCode } = {}) => {
         set({ adminOrdersLoading: true });
         try {
-          const result = await apiClient.orders.listPaginated({ page, limit, status, search, userId, startDate, endDate });
+          const result = await apiClient.orders.listPaginated({ page, limit, status, search, userId, startDate, endDate, providerCode });
           set({
             adminOrders: result.orders,
             adminPagination: result.pagination,

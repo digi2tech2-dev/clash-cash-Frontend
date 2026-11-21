@@ -67,7 +67,7 @@ export const getAccountStatusLabel = (status, isArabic = true) => {
     approved: { ar: 'مفعّل', en: 'Approved' },
     verification_required: { ar: 'تأكيد البريد مطلوب', en: 'Email Verification Required' },
     pending: { ar: 'بانتظار التفعيل', en: 'Pending Approval' },
-    rejected: { ar: 'مرفوض', en: 'Rejected' },
+    rejected: { ar: 'محظور', en: 'Blocked' },
   };
 
   return labels[normalized]?.[isArabic ? 'ar' : 'en'] || status || (isArabic ? 'غير معروف' : 'Unknown');

@@ -20,12 +20,44 @@ import { SUPERVISOR_PERMISSION_GROUPS, normalizePermissions } from '../../utils/
 import { resolveUserAvatar } from '../../utils/avatar';
 
 const SUPERVISOR_ROLES = ['supervisor', 'manager', 'moderator'];
+const MANAGED_ROLES = ['SUPERVISOR', 'ADMIN'];
+const MANAGED_USERS_PAGE_SIZE = 100;
 const FILTER_OPTIONS = ['all', 'approved', 'pending', 'rejected'];
 
+const loadManagedUsers = async () => {
+  const roleUsers = await Promise.all(MANAGED_ROLES.map(async (role) => {
+    const entries = [];
+    let page = 1;
+    let pageCount = 1;
+
+    while (page <= pageCount) {
+      const result = await apiClient.users.list({
+        page,
+        limit: MANAGED_USERS_PAGE_SIZE,
+        sortBy: 'name',
+        sortOrder: 'asc',
+        role,
+      });
+      const items = Array.isArray(result) ? result : (result?.users || []);
+      entries.push(...items);
+      if (Array.isArray(result)) break;
+      const pagination = result?.pagination;
+      pageCount = Math.max(1, Number(pagination?.pages || pagination?.totalPages || 1));
+      if (!pagination) break;
+      page += 1;
+    }
+
+    return entries;
+  }));
+
+  return Array.from(new Map(roleUsers.flat().map((entry) => [String(entry.id), entry])).values());
+};
+
 const AdminSupervisors = () => {
-  const { users, loadUsers, updateUserRole, updateUserStatus, updateUserPermissions } = useAdminStore();
+  const { updateUserRole, updateUserStatus, updateUserPermissions } = useAdminStore();
   const { user: actor } = useAuthStore();
   const { addToast } = useToast();
+  const [managedUsers, setManagedUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [permissionTarget, setPermissionTarget] = useState(null);
@@ -44,17 +76,27 @@ const AdminSupervisors = () => {
   useEffect(() => {
     let mounted = true;
     setIsLoading(true);
-    Promise.resolve(loadUsers({ force: true })).finally(() => {
-      if (mounted) setIsLoading(false);
-    });
+    loadManagedUsers()
+      .then((entries) => { if (mounted) setManagedUsers(entries); })
+      .catch((error) => { if (mounted) addToast(error?.message || 'فشل تحميل المشرفين.', 'error'); })
+      .finally(() => { if (mounted) setIsLoading(false); });
     return () => {
       mounted = false;
     };
-  }, [loadUsers]);
+  }, [addToast]);
+
+  const refreshManagedUsers = async () => {
+    const entries = await loadManagedUsers();
+    setManagedUsers(entries);
+    return entries;
+  };
 
   const supervisors = useMemo(
-    () => (users || []).filter((entry) => SUPERVISOR_ROLES.includes(String(entry.role || '').toLowerCase())),
-    [users]
+    () => managedUsers.filter((entry) => (
+      SUPERVISOR_ROLES.includes(String(entry.role || '').toLowerCase())
+      || String(entry.role || '').toLowerCase() === 'admin'
+    )),
+    [managedUsers]
   );
 
   useEffect(() => {
@@ -118,7 +160,7 @@ const AdminSupervisors = () => {
     try {
       await updateUserRole(id, nextRole, actor);
       addToast('تم تحديث الدور بنجاح.', 'success');
-      await loadUsers({ force: true });
+      await refreshManagedUsers();
     } catch (error) {
       addToast(error?.message || 'فشل تحديث الدور.', 'error');
     }
@@ -153,7 +195,7 @@ const AdminSupervisors = () => {
       setCandidateSearch('');
       setCandidateUsers([]);
       setSelectedCandidateId('');
-      await loadUsers({ force: true });
+      await refreshManagedUsers();
     } catch (error) {
       addToast(error?.message || 'فشل إضافة المشرف.', 'error');
     } finally {
@@ -166,7 +208,7 @@ const AdminSupervisors = () => {
     try {
       await updateUserStatus(target.id, nextStatus, actor);
       addToast(nextStatus === 'approved' ? 'تم تفعيل المشرف.' : 'تم حظر المشرف.', 'success');
-      await loadUsers({ force: true });
+      await refreshManagedUsers();
     } catch (error) {
       addToast(error?.message || 'فشل تحديث الحالة.', 'error');
     }
@@ -183,7 +225,7 @@ const AdminSupervisors = () => {
       await updateUserPermissions(demoteTarget.id, [], actor);
       addToast('تم تحويل المشرف إلى عميل.', 'success');
       setDemoteTarget(null);
-      await loadUsers({ force: true });
+      await refreshManagedUsers();
     } catch (error) {
       addToast(error?.message || 'فشل تحويل المشرف إلى عميل.', 'error');
     }
@@ -209,7 +251,7 @@ const AdminSupervisors = () => {
       await updateUserPermissions(permissionTarget.id, selectedPermissions, actor);
       addToast('تم تحديث صلاحيات المشرف.', 'success');
       setPermissionTarget(null);
-      await loadUsers({ force: true });
+      await refreshManagedUsers();
     } catch (error) {
       addToast(error?.message || 'فشل تحديث الصلاحيات.', 'error');
     } finally {
@@ -316,22 +358,22 @@ const AdminSupervisors = () => {
                   </span>
                 </TableCell>
                 <TableCell className="text-center">
-                  <select
+                  {String(entry.role || '').toLowerCase() === 'admin' ? (
+                    <Badge variant="success">أدمن</Badge>
+                  ) : <select
                     className="rounded-md border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
                     value={entry.role}
                     onChange={(event) => handleRoleChange(entry.id, event.target.value)}
                   >
-                    <option value="manager">مانجر</option>
-                    <option value="moderator">مشرف</option>
                     <option value="supervisor">سوبرفايزر</option>
                     <option value="customer">عميل</option>
                     <option value="admin">أدمن</option>
-                  </select>
+                  </select>}
                 </TableCell>
                 <TableCell className="text-center">
-                  <Button size="sm" variant="outline" onClick={() => openPermissionsModal(entry)}>
+                  <Button size="sm" variant="outline" onClick={() => openPermissionsModal(entry)} disabled={String(entry.role || '').toLowerCase() === 'admin'}>
                     <ShieldCheck className="h-4 w-4" />
-                    {normalizePermissions(entry.permissions).length || 'تحديد'}
+                    {String(entry.role || '').toLowerCase() === 'admin' ? 'كاملة' : (normalizePermissions(entry.permissions).length || 'تحديد')}
                   </Button>
                 </TableCell>
                 <TableCell className="text-center">
@@ -341,13 +383,13 @@ const AdminSupervisors = () => {
                 </TableCell>
                 <TableCell className="text-end">
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant={isRejectedAccountStatus(entry.status) ? 'primary' : 'outline'} onClick={() => handleStatusToggle(entry)}>
+                    <Button size="sm" variant={isRejectedAccountStatus(entry.status) ? 'primary' : 'outline'} onClick={() => handleStatusToggle(entry)} disabled={String(entry.role || '').toLowerCase() === 'admin'}>
                       {isRejectedAccountStatus(entry.status) ? 'تفعيل' : 'حظر'}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setActivityTarget(entry)}>
                       <Activity className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="danger" onClick={() => handleDemoteSupervisor(entry)}>
+                    <Button size="sm" variant="danger" onClick={() => handleDemoteSupervisor(entry)} disabled={String(entry.role || '').toLowerCase() === 'admin'}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

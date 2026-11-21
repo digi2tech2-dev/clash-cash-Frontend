@@ -59,6 +59,8 @@ const ProtectedRoute = ({ children, roles = [], permission = null }) => {
     return redirectOnDenied();
   }
 
+  if (location.pathname === '/referral' && !user?.referralEnabled) return redirectOnDenied();
+
   if (!hasPermission(user, permission)) {
     return redirectOnDenied();
   }

@@ -11,7 +11,7 @@ import {
 import { normalizeAccountStatus, normalizeSignupMethod } from '../utils/accountStatus';
 import { getWalletBalanceSummary, normalizeMoneyAmount } from '../utils/money';
 import { getDefaultWhatsAppNumber, normalizeWhatsAppNumber } from '../utils/whatsapp';
-import { createDefaultPaymentGroups, normalizePaymentGroups } from '../utils/paymentSettings';
+import { createDefaultPaymentGroups, normalizePaymentGroups, isSiteWalletPaymentMethod } from '../utils/paymentSettings';
 import { devLogger } from '../utils/devLogger';
 import { resolveUserAvatar } from '../utils/avatar';
 import {
@@ -172,6 +172,56 @@ const hashPassword = async (plainText) => {
   return `legacy-${Math.abs(hash)}`;
 };
 
+const getCurrentMockUserId = () => {
+  const persisted = readAuthLocalStorage();
+  return String(persisted?.state?.user?.id || persisted?.state?.user?._id || '');
+};
+
+const getMockSecurityState = () => {
+  let persistedState = {};
+  try {
+    persistedState = typeof window !== 'undefined'
+      ? JSON.parse(window.localStorage.getItem(ACCOUNT_SECURITY_STORAGE_KEY) || '{}')
+      : {};
+  } catch {
+    persistedState = {};
+  }
+
+  const memoryState = __inMemoryDB[ACCOUNT_SECURITY_STORAGE_KEY] || {};
+  return Object.fromEntries(
+    [...new Set([...Object.keys(persistedState), ...Object.keys(memoryState)])]
+      .map((userId) => [userId, { ...persistedState[userId], ...memoryState[userId] }])
+  );
+};
+
+const saveMockSecurityState = (state) => {
+  __inMemoryDB[ACCOUNT_SECURITY_STORAGE_KEY] = state;
+  try {
+    if (typeof window !== 'undefined') {
+      const persistedFlags = Object.fromEntries(
+        Object.entries(state).map(([userId, userState]) => [userId, {
+          twoFactorEnabled: Boolean(userState?.twoFactorEnabled),
+        }])
+      );
+      window.localStorage.setItem(ACCOUNT_SECURITY_STORAGE_KEY, JSON.stringify(persistedFlags));
+    }
+  } catch {
+    // Keep the current session usable if browser storage is unavailable.
+  }
+};
+
+const createMockProfileCompletion = (user) => {
+  const completionToken = `mock-profile-${user.id}-${Date.now()}`;
+  const tokens = __inMemoryDB['profile-completion-tokens'] || {};
+  __inMemoryDB['profile-completion-tokens'] = { ...tokens, [completionToken]: String(user.id) };
+  return {
+    requiresProfileCompletion: true,
+    status: 'PROFILE_COMPLETION_REQUIRED',
+    completionToken,
+    user: sanitizeUser(user),
+  };
+};
+
 const sanitizeUser = (user) => {
   if (!user) return null;
   const { password, passwordHash, ...safeUser } = user;
@@ -180,8 +230,11 @@ const sanitizeUser = (user) => {
     walletBalance: safeUser.walletBalance ?? safeUser.coins ?? safeUser.balance,
     creditLimit: normalizeCreditLimitValue(safeUser.creditLimit),
   });
+  const twoFactorEnabled = Boolean(getMockSecurityState()?.[safeUser.id]?.twoFactorEnabled);
   return {
     ...safeUser,
+    twoFactorEnabled,
+    isTwoFactorEnabled: twoFactorEnabled,
     avatar: resolveUserAvatar(safeUser, safeUser.name || safeUser.email || 'Clash Cash User'),
     coins: walletSummary.walletBalance,
     walletBalance: walletSummary.walletBalance,
@@ -192,16 +245,15 @@ const sanitizeUser = (user) => {
     availableBalance: walletSummary.availableBalance,
     permissions: Array.isArray(safeUser.permissions) ? safeUser.permissions : [],
     isApiEnabled: Boolean(safeUser.isApiEnabled),
+    referralEnabled: Boolean(safeUser.referralEnabled),
     whitelistIps: Array.isArray(safeUser.whitelistIps) ? safeUser.whitelistIps : [],
     webhookUrl: safeUser.webhookUrl || '',
   };
 };
 
 const isMockTwoFactorEnabled = (userId) => {
-  // Moved to in-memory store; no localStorage access.
   try {
-    const store = __inMemoryDB[ACCOUNT_SECURITY_STORAGE_KEY] || {};
-    return Boolean(store?.[userId]?.twoFactorEnabled);
+    return Boolean(getMockSecurityState()?.[userId]?.twoFactorEnabled);
   } catch {
     return false;
   }
@@ -733,12 +785,27 @@ const mockApi = {
         saveDB('admin-storage', db);
       }
 
+      if (normalizedStatus === 'approved' && !/^\+[1-9]\d{7,14}$/.test(String(user.phone || '').trim())) {
+        return createMockProfileCompletion(user);
+      }
+
       if (isMockTwoFactorEnabled(user.id)) {
-        const tempToken = `mock-2fa-${user.id}-${Date.now()}`;
+        const challengeId = Date.now();
+        const securityState = getMockSecurityState();
+        saveMockSecurityState({
+          ...securityState,
+          [user.id]: {
+            ...securityState[user.id],
+            loginOtp: '123456',
+            loginOtpExpiresAt: Date.now() + 5 * 60 * 1000,
+          },
+        });
+        const tempToken = `mock-2fa-${user.id}-${challengeId}`;
         return {
           requires2FA: true,
           tempToken,
           twoFactorToken: tempToken,
+          demoCode: '123456',
           user: sanitizeUser(user),
         };
       }
@@ -753,33 +820,121 @@ const mockApi = {
       if (!normalizedToken.startsWith('mock-2fa-') || !userId) {
         throw new Error('Invalid 2FA session');
       }
-      if (String(code || '').replace(/\D/g, '') !== '123456') {
+      const securityState = getMockSecurityState();
+      const challenge = securityState[userId];
+      if (
+        String(code || '').replace(/\D/g, '') !== String(challenge?.loginOtp || '')
+        || Number(challenge?.loginOtpExpiresAt || 0) <= Date.now()
+      ) {
         throw new Error('Invalid verification code');
       }
       const db = getDB('admin-storage', { state: { users: mockUsers } });
       const user = (db.state.users || mockUsers).find((entry) => String(entry.id) === String(userId));
       if (!user) throw new Error('User not found');
+      saveMockSecurityState({
+        ...securityState,
+        [userId]: { ...challenge, loginOtp: '', loginOtpExpiresAt: 0 },
+      });
       return { user: sanitizeUser(user), token: 'mock-jwt-token-2fa' };
+    },
+
+    completeGoogleProfile: async ({ completionToken, country, currency, phone }) => {
+      await new Promise(resolve => setTimeout(resolve, DELAY));
+      const tokens = __inMemoryDB['profile-completion-tokens'] || {};
+      const userId = tokens[String(completionToken || '')];
+      if (!userId) throw new Error('Profile completion link is invalid or expired.');
+      const db = getDB('admin-storage', { state: { users: mockUsers } });
+      const user = (db.state.users || mockUsers).find((entry) => String(entry.id) === userId);
+      if (!user) throw new Error('User not found');
+      const normalizedPhone = String(phone || '').trim();
+      if (!/^\+[1-9]\d{7,14}$/.test(normalizedPhone)) throw new Error('Enter a valid phone number with country code.');
+      user.phone = normalizedPhone;
+      user.country = country || user.country || 'US';
+      user.currency = currency || user.currency || 'USD';
+      __inMemoryDB['profile-completion-tokens'] = Object.fromEntries(
+        Object.entries(tokens).filter(([token]) => token !== String(completionToken))
+      );
+      saveDB('admin-storage', db);
+      if (isMockTwoFactorEnabled(user.id)) {
+        const securityState = getMockSecurityState();
+        saveMockSecurityState({
+          ...securityState,
+          [user.id]: {
+            ...securityState[user.id],
+            loginOtp: '123456',
+            loginOtpExpiresAt: Date.now() + 5 * 60 * 1000,
+          },
+        });
+        const tempToken = `mock-2fa-${user.id}-${Date.now()}`;
+        return { requires2FA: true, tempToken, twoFactorToken: tempToken, demoCode: '123456', email: user.email };
+      }
+      return { user: sanitizeUser(user), token: 'mock-profile-completion-token' };
     },
 
     generateTwoFactor: async () => {
       await new Promise(resolve => setTimeout(resolve, DELAY));
-      return { message: 'Verification code sent to email' };
+      const userId = getCurrentMockUserId();
+      if (!userId) throw new Error('Sign in again before enabling two-factor authentication.');
+      const securityState = getMockSecurityState();
+      const current = securityState[userId] || {};
+      if (current.twoFactorEnabled) throw new Error('Two-factor authentication is already enabled.');
+      saveMockSecurityState({
+        ...securityState,
+        [userId]: {
+          ...current,
+          setupOtp: '123456',
+          setupOtpExpiresAt: Date.now() + 5 * 60 * 1000,
+        },
+      });
+      return { message: 'Verification code sent to email', demoCode: '123456' };
     },
 
     enableTwoFactor: async ({ code } = {}) => {
       await new Promise(resolve => setTimeout(resolve, DELAY));
-      if (String(code || '').replace(/\D/g, '') !== '123456') {
+      const userId = getCurrentMockUserId();
+      const securityState = getMockSecurityState();
+      const current = securityState[userId] || {};
+      if (
+        !userId
+        || String(code || '').replace(/\D/g, '') !== String(current.setupOtp || '')
+        || Number(current.setupOtpExpiresAt || 0) <= Date.now()
+      ) {
         throw new Error('Invalid 2FA setup code');
       }
+      saveMockSecurityState({
+        ...securityState,
+        [userId]: {
+          ...current,
+          twoFactorEnabled: true,
+          setupOtp: '',
+          setupOtpExpiresAt: 0,
+        },
+      });
       return { twoFactorEnabled: true };
     },
 
     disableTwoFactor: async ({ password, token, code }) => {
       await new Promise(resolve => setTimeout(resolve, DELAY));
-      if (!String(password || token || code || '').trim()) {
-        throw new Error('Password or 2FA code is required');
+      const userId = getCurrentMockUserId();
+      const db = getDB('admin-storage', { state: { users: mockUsers } });
+      const user = (db.state.users || mockUsers).find((entry) => String(entry.id) === userId);
+      const candidatePassword = String(password || token || code || '').trim();
+      if (!user || !candidatePassword || user.passwordHash !== await hashPassword(candidatePassword)) {
+        throw new Error('Invalid credentials. Enter your current password.');
       }
+      const securityState = getMockSecurityState();
+      const current = securityState[userId] || {};
+      saveMockSecurityState({
+        ...securityState,
+        [userId]: {
+          ...current,
+          twoFactorEnabled: false,
+          loginOtp: '',
+          loginOtpExpiresAt: 0,
+          setupOtp: '',
+          setupOtpExpiresAt: 0,
+        },
+      });
       return { twoFactorEnabled: false };
     },
 
@@ -823,6 +978,38 @@ const mockApi = {
         saveDB('admin-storage', db);
       }
 
+      if (normalizeAccountStatus(user.status) === 'approved' && !/^\+[1-9]\d{7,14}$/.test(String(user.phone || '').trim())) {
+        const completion = createMockProfileCompletion(user);
+        return {
+          ...completion,
+          requiresProfileCompletion: undefined,
+          status: 'profile_completion_required',
+          country: user.country || '',
+          currency: user.currency || '',
+        };
+      }
+
+      if (isMockTwoFactorEnabled(user.id)) {
+        const securityState = getMockSecurityState();
+        saveMockSecurityState({
+          ...securityState,
+          [user.id]: {
+            ...securityState[user.id],
+            loginOtp: '123456',
+            loginOtpExpiresAt: Date.now() + 5 * 60 * 1000,
+          },
+        });
+        const tempToken = `mock-2fa-${user.id}-${Date.now()}`;
+        return {
+          requires2FA: true,
+          tempToken,
+          twoFactorToken: tempToken,
+          demoCode: '123456',
+          email: user.email,
+          user: sanitizeUser(user),
+        };
+      }
+
       return { user: sanitizeUser(user), token: 'mock-google-token-12345' };
     },
 
@@ -834,6 +1021,22 @@ const mockApi = {
           ? 'If that email exists, a verification link has been sent.'
           : 'Email is required.',
       };
+    },
+
+    requestPasswordReset: async (email) => {
+      await new Promise(resolve => setTimeout(resolve, DELAY));
+      return {
+        success: true,
+        message: email
+          ? 'If that email exists, a password reset link has been sent.'
+          : 'Email is required.',
+      };
+    },
+
+    resetPassword: async ({ token, password }) => {
+      await new Promise(resolve => setTimeout(resolve, DELAY));
+      if (!token || !password) throw new Error('A valid reset link and password are required.');
+      return { success: true, message: 'Password updated successfully.' };
     },
     
     register: async (userData) => {
@@ -959,7 +1162,7 @@ const mockApi = {
       };
       db.state.notifications = [notification, ...(db.state.notifications || [])];
       saveDB('notifications-storage', db);
-      return notification;
+      return payload.allCustomers ? { sent: (getDB('admin-storage', { state: { users: mockUsers } }).state.users || []).filter((user) => String(user.role || '').toLowerCase() === 'customer').length } : notification;
     },
   },
 
@@ -1317,7 +1520,8 @@ const mockApi = {
       return allOrders; // Admin sees all
     },
 
-    listPaginated: async ({ page = 1, limit = 100, status, search, userId, startDate, endDate } = {}) => {
+    listProviders: async () => mockApi.suppliers.list(),
+    listPaginated: async ({ page = 1, limit = 100, status, search, userId, startDate, endDate, providerCode } = {}) => {
       await new Promise(resolve => setTimeout(resolve, DELAY));
       const db = getDB('order-storage', { state: { orders: mockOrders } });
       const allOrders = db.state.orders || mockOrders;
@@ -1330,6 +1534,7 @@ const mockApi = {
 
       const filteredOrders = allOrders
         .filter((order) => {
+          if (providerCode && String(order?.providerCode || '').toLowerCase() !== String(providerCode).toLowerCase()) return false;
           if (normalizedStatus && normalizedStatus !== 'all' && String(order?.status || '').toLowerCase() !== normalizedStatus) {
             return false;
           }
@@ -2075,6 +2280,10 @@ const mockApi = {
             }
             user.isApiEnabled = Boolean(updates.isApiEnabled);
           }
+          if (updates?.referralEnabled !== undefined) {
+            if (!actor || actor.role !== 'admin') throw new Error('Only admin can update referral access');
+            user.referralEnabled = Boolean(updates.referralEnabled);
+          }
 
           saveDB('admin-storage', db);
           return sanitizeUser(user);
@@ -2423,8 +2632,10 @@ const mockApi = {
         transactionNumber: readValue('transactionNumber') || readValue('transactionId') || readValue('paymentReference'),
         paymentMethod: readValue('paymentMethod') || readValue('paymentMethodName'),
         paymentMethodId: readValue('paymentMethodId'),
+        paymentMethodName: readValue('paymentMethodName') || readValue('paymentMethod'),
+        paymentMethodTypeSnapshot: readValue('isSiteWalletPayment') ? 'site_wallet' : null,
         screenshotName: screenshot?.name || '',
-        proofImage: screenshot?.preview || '',
+        proofImage: screenshot?.preview || (typeof File !== 'undefined' && screenshot instanceof File ? await readFileAsDataUrl(screenshot) : ''),
         status: 'PENDING',
         createdAt: new Date().toISOString(),
       };
@@ -2440,11 +2651,48 @@ const mockApi = {
       if (index === -1) throw new Error('Target request not found');
       const normalizedStatus = String(status || 'PENDING').trim().toUpperCase();
       const rejectionReason = payload.adminNotes ?? payload.rejectionReason ?? payload.reason ?? '';
+      const current = db.state.requests[index];
+      if (normalizedStatus === 'APPROVED' && current.status === 'APPROVED') {
+        throw new Error('This target order has already been approved.');
+      }
+      if (normalizedStatus === 'APPROVED' && current.status === 'REJECTED') {
+        throw new Error('A rejected target order cannot be approved.');
+      }
+      const isSiteWallet = isSiteWalletPaymentMethod({
+        id: current.paymentMethodId,
+        name: current.paymentMethodName || current.paymentMethod,
+        type: current.paymentMethodTypeSnapshot,
+      });
+      if (normalizedStatus === 'APPROVED' && !isSiteWallet && !payload.payoutProof) {
+        throw new Error('Attach the payout receipt before approving an external payout.');
+      }
+      let payoutAmount = current.payoutAmount ?? null;
+      let payoutCurrency = current.payoutCurrency || null;
+      if (normalizedStatus === 'APPROVED' && isSiteWallet) {
+        const usersDb = getDB('admin-storage', { state: { users: mockUsers } });
+        const customer = (usersDb.state.users || []).find((entry) => String(entry.id || entry._id) === String(current.userId));
+        payoutCurrency = String(customer?.currency || 'USD').toUpperCase();
+        const currencyDb = getDB('system-storage', { state: { currencies: mockCurrencies } });
+        const currencies = currencyDb.state.currencies || mockCurrencies;
+        const getRate = (code) => Number(currencies.find((currency) => String(currency.code).toUpperCase() === code)?.rate || 1);
+        payoutAmount = Number(current.totalPrice || 0);
+        if (payoutCurrency !== 'EGP') {
+          payoutAmount = Number(((payoutAmount / getRate('EGP')) * getRate(payoutCurrency)).toFixed(2));
+        }
+        if (customer) {
+          customer.walletBalance = Number(customer.walletBalance ?? customer.coins ?? 0) + payoutAmount;
+          customer.coins = customer.walletBalance;
+          saveDB('admin-storage', usersDb);
+        }
+      }
       const next = {
-        ...db.state.requests[index],
+        ...current,
         status: normalizedStatus,
         adminNotes: normalizedStatus === 'REJECTED' ? rejectionReason : '',
         rejectionReason: normalizedStatus === 'REJECTED' ? rejectionReason : '',
+        payoutProof: payload.payoutProofPreview || payload.payoutProof?.preview || current.payoutProof || '',
+        payoutAmount,
+        payoutCurrency,
         reviewedAt: new Date().toISOString(),
       };
       db.state.requests[index] = next;

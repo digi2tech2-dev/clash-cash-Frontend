@@ -10,6 +10,7 @@ import {
   Globe,
   Lock,
   Mail,
+  Sparkles,
   TicketCheck,
   User,
 } from 'lucide-react';
@@ -21,11 +22,13 @@ import ThemeToggle from '../components/ui/ThemeToggle';
 import LanguageSwitcher from '../components/ui/LanguageSwitcher';
 import SiteCopyrightFooter from '../components/layout/SiteCopyrightFooter';
 import OtpInput from '../components/account/OtpInput';
+import CountryPhoneInput from '../components/auth/CountryPhoneInput';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../components/ui/Toast';
 import useSystemStore from '../store/useSystemStore';
 import { useTranslation } from 'react-i18next';
 import { usePlatformBrand } from '../context/ThemeContext';
+import apiClient from '../services/client';
 import {
   validateEmail,
   validateFullName,
@@ -40,6 +43,7 @@ import {
   readReferralBridge,
   readReferralCodeFromSearch,
 } from '../utils/referralCode';
+import { normalizePhoneNumber, validatePhoneNumber } from '../utils/phone';
 import styles from './Auth.module.css';
 
 const GoogleMark = () => (
@@ -82,9 +86,12 @@ const Auth = () => {
   const { addToast } = useToast();
   const {
     login,
+    requestPasswordReset,
+    resetPassword,
     verifyTwoFactor,
     loginWithGoogle,
     completeGoogleProfile,
+    updateUserSession,
     signup,
     isLoading,
     error: storeError,
@@ -95,6 +102,23 @@ const Auth = () => {
   const { currencies: systemCurrencies, loadCurrencies } = useSystemStore();
 
   const [isLogin, setIsLogin] = useState(true);
+  const [resetMode, setResetMode] = useState(() => new URLSearchParams(location.search).get('mode') === 'reset-password');
+  const [resetToken, setResetToken] = useState(() => new URLSearchParams(location.search).get('token') || '');
+  const [resetPasswordValue, setResetPasswordValue] = useState('');
+  const [resetPasswordConfirmation, setResetPasswordConfirmation] = useState('');
+  const [resetPasswordError, setResetPasswordError] = useState('');
+  const [resetComplete, setResetComplete] = useState(false);
+  const [resetSubmitting, setResetSubmitting] = useState(false);
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
+  const [showAuthChoice, setShowAuthChoice] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('mode') !== 'signup'
+      && params.get('mode') !== 'reset-password'
+      && !params.has('token')
+      && !params.has('status')
+      && !params.has('completionToken')
+      && params.get('method') !== 'email';
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -102,8 +126,10 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [name, setName] = useState('');
-  const [country, setCountry] = useState('US');
-  const [currency, setCurrency] = useState('USD');
+  const [country, setCountry] = useState(() => new URLSearchParams(location.search).get('country') || 'US');
+  const [phoneCountry, setPhoneCountry] = useState(() => new URLSearchParams(location.search).get('phoneCountry') || 'EG');
+  const [phone, setPhone] = useState('');
+  const [currency, setCurrency] = useState(() => new URLSearchParams(location.search).get('currency') || 'USD');
   const [referralCode, setReferralCode] = useState(() => readReferralCodeFromSearch(location.search) || readReferralBridge());
   const [countries] = useState(COUNTRY_CATALOG);
   const [errors, setErrors] = useState({});
@@ -116,7 +142,6 @@ const Auth = () => {
   const [googleSetupPending, setGoogleSetupPending] = useState(() => (
     typeof window !== 'undefined'
     && normalizeAccountStatus(new URLSearchParams(window.location.search).get('status')) === 'profile_completion_required'
-    && Boolean(new URLSearchParams(window.location.search).get('completionToken'))
   ));
   const [googleCompletionToken, setGoogleCompletionToken] = useState(() => (
     typeof window === 'undefined'
@@ -132,6 +157,16 @@ const countryOptions = useMemo(() => {
   const selectedCountry = useMemo(
     () => countryOptions.find((item) => item.cca2 === country) || countryOptions[0],
     [countryOptions, country]
+  );
+
+  const selectedPhoneCountry = useMemo(
+    () => countryOptions.find((item) => item.cca2 === phoneCountry) || countryOptions[0],
+    [countryOptions, phoneCountry]
+  );
+
+  const internationalPhone = useMemo(
+    () => normalizePhoneNumber(phone, selectedPhoneCountry),
+    [phone, selectedPhoneCountry]
   );
 
   const availableCurrencyOptions = useMemo(() => {
@@ -167,14 +202,50 @@ const countryOptions = useMemo(() => {
     }
 
     if (mode === 'signup') {
+      setResetMode(false);
       setIsLogin(false);
       setRegisterStep(1);
+      setShowAuthChoice(false);
       return;
     }
 
     if (mode === 'login') {
+      setResetMode(false);
       setIsLogin(true);
       setRegisterStep(1);
+      setShowAuthChoice(
+        !params.has('token')
+        && !params.has('status')
+        && !params.has('completionToken')
+        && params.get('method') !== 'email'
+      );
+      return;
+    }
+
+    if (mode === 'reset-password') {
+      setResetMode(true);
+      setResetToken(params.get('token') || '');
+      setResetComplete(false);
+      setShowAuthChoice(false);
+      return;
+    }
+
+    if (normalizeAccountStatus(params.get('status')) === 'profile_completion_required') {
+      setGoogleSetupPending(true);
+      setGoogleCompletionToken(params.get('completionToken') || '');
+      setIsLogin(false);
+      setRegisterStep(2);
+      setShowAuthChoice(false);
+      setCountry(params.get('country') || user?.country || 'US');
+      setPhoneCountry(params.get('phoneCountry') || user?.country || 'EG');
+      setCurrency(params.get('currency') || user?.currency || 'USD');
+      setEmail(user?.email || '');
+      return;
+    }
+
+    if (params.has('token') || params.has('status') || params.has('completionToken')) {
+      setResetMode(false);
+      setShowAuthChoice(false);
     }
   }, [location.search]);
 
@@ -225,7 +296,30 @@ const countryOptions = useMemo(() => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'reset-password') return;
+    if (
+      normalizeAccountStatus(params.get('status')) === 'profile_completion_required'
+      && !params.get('completionToken')
+    ) return;
     const token = params.get('token');
+    if (String(params.get('status') || '').toUpperCase() === 'TWO_FACTOR_REQUIRED') {
+      if (oauthHandledRef.current) return;
+      oauthHandledRef.current = true;
+      const tempToken = params.get('tempToken') || params.get('twoFactorToken');
+      if (tempToken) {
+        setIsLogin(true);
+        setShowAuthChoice(false);
+        setTwoFactorChallenge({
+          requires2FA: true,
+          tempToken,
+          twoFactorToken: tempToken,
+          email: params.get('email') || null,
+        });
+      } else {
+        addToast('جلسة التحقق غير مكتملة. سجّل الدخول مرة أخرى.', 'error');
+      }
+      return;
+    }
     const callbackStatus = normalizeAccountStatus(params.get('status'));
     if ((!token && !callbackStatus) || oauthHandledRef.current) return;
 
@@ -239,6 +333,9 @@ const countryOptions = useMemo(() => {
         setGoogleSetupPending(true);
         setIsLogin(false);
         setRegisterStep(2);
+        setCountry(result?.country || result?.user?.country || params.get('country') || 'US');
+        setPhoneCountry(result?.user?.country || params.get('country') || 'EG');
+        setCurrency(result?.currency || result?.user?.currency || params.get('currency') || 'USD');
         return;
       }
 
@@ -349,6 +446,7 @@ const countryOptions = useMemo(() => {
     const nextErrors = {
       country: country ? null : t('auth.country'),
       currency: currency ? null : t('auth.noCurrenciesConfigured'),
+      phone: validatePhoneNumber(phone, selectedPhoneCountry, dir === 'rtl' ? 'ar' : 'en'),
     };
 
     setScopedErrors(nextErrors);
@@ -360,7 +458,7 @@ const countryOptions = useMemo(() => {
     && Boolean(email.trim())
     && Boolean(password)
     && Boolean(confirmPassword);
-  const isStepTwoReady = Boolean(country) && Boolean(currency);
+  const isStepTwoReady = Boolean(country) && Boolean(currency) && Boolean(phone.trim());
 
   const goToRegisterStepTwo = () => {
     if (!validateRegisterStepOne()) return;
@@ -447,17 +545,40 @@ const countryOptions = useMemo(() => {
     }
 
     if (googleSetupPending) {
-      if (!country || !currency) {
-        addToast('اختر الدولة والعملة لإكمال حساب Google.', 'error');
+      if (!validateRegisterStepTwo()) {
+        addToast(dir === 'rtl' ? 'أكمل بيانات الهاتف والدولة والعملة.' : 'Complete your phone, country, and currency details.', 'error');
         return;
       }
 
       try {
-        const result = await completeGoogleProfile({
-          completionToken: googleCompletionToken,
-          country,
-          currency,
-        });
+        let result;
+        if (googleCompletionToken) {
+          result = await completeGoogleProfile({
+            completionToken: googleCompletionToken,
+            country,
+            currency,
+            phone: internationalPhone,
+          });
+        } else if (isAuthenticated && user?.id) {
+          result = await apiClient.users.updateProfile(
+            user.id,
+            { country, currency, phone: internationalPhone },
+            user
+          );
+          updateUserSession(result);
+        } else {
+          throw new Error(dir === 'rtl' ? 'انتهت صلاحية جلسة إكمال البيانات. سجّل الدخول مرة أخرى.' : 'Profile completion expired. Please sign in again.');
+        }
+
+        if (result?.requires2FA) {
+          setGoogleSetupPending(false);
+          setGoogleCompletionToken('');
+          setIsLogin(true);
+          setTwoFactorChallenge(result);
+          setTwoFactorCode('');
+          addToast(dir === 'rtl' ? 'أدخل كود التحقق المرسل إلى بريدك الإلكتروني لإكمال تسجيل الدخول.' : 'Enter the code sent to your email to finish signing in.', 'warning');
+          return;
+        }
         window.sessionStorage.removeItem('auth:google-signup-intent');
         clearReferralBridge();
         setGoogleSetupPending(false);
@@ -478,6 +599,7 @@ const countryOptions = useMemo(() => {
           password,
           country,
           currency,
+          phone: internationalPhone,
           signupMethod: 'email',
           referralCode: referralCode.trim().toUpperCase(),
         });
@@ -486,6 +608,20 @@ const countryOptions = useMemo(() => {
       setTwoFactorChallenge(result);
       setTwoFactorCode('');
       addToast('أدخل كود التحقق المرسل إلى بريدك الإلكتروني لإكمال تسجيل الدخول.', 'warning');
+      return;
+    }
+
+    if (isLogin && result?.requiresProfileCompletion) {
+      setGoogleCompletionToken(result.completionToken || '');
+      setGoogleSetupPending(true);
+      setIsLogin(false);
+      setRegisterStep(2);
+      setCountry(result.user?.country || 'US');
+      setPhoneCountry(result.user?.country || 'EG');
+      setCurrency(result.user?.currency || 'USD');
+      setEmail(result.user?.email || email);
+      setPhone(result.user?.phone || '');
+      setShowAuthChoice(false);
       return;
     }
 
@@ -527,6 +663,23 @@ const countryOptions = useMemo(() => {
     }
     const result = await loginWithGoogle();
     if (!result) return;
+    if (isLogin && result.requires2FA) {
+      setShowAuthChoice(false);
+      setTwoFactorChallenge(result);
+      setTwoFactorCode('');
+      addToast('أدخل كود التحقق المرسل إلى بريدك الإلكتروني لإكمال تسجيل الدخول.', 'warning');
+      return;
+    }
+    if (result.status === 'profile_completion_required' || result.completionToken) {
+      setGoogleCompletionToken(result.completionToken || '');
+      setGoogleSetupPending(true);
+      setIsLogin(false);
+      setRegisterStep(2);
+      setCountry(result.country || result.user?.country || 'US');
+      setPhoneCountry(result.user?.country || 'EG');
+      setCurrency(result.currency || result.user?.currency || 'USD');
+      return;
+    }
     consumeAuthResult(result, { source: 'google', mode: isLogin ? 'login' : 'signup' });
   };
 
@@ -577,21 +730,74 @@ const countryOptions = useMemo(() => {
     }
   };
 
-  const handleForgotSubmit = (event) => {
+  const handleForgotSubmit = async (event) => {
     event.preventDefault();
 
-    if (!forgotEmail) {
-      addToast(t('auth.emailRequired'), 'error');
+    const emailError = validateEmail(forgotEmail);
+    if (emailError) {
+      addToast(emailError, 'error');
       return;
     }
 
-    addToast(t('auth.resetLinkSent'), 'success');
-    setForgotModalOpen(false);
-    setForgotEmail('');
+    setForgotSubmitting(true);
+    try {
+      await requestPasswordReset(forgotEmail.trim());
+      addToast(
+        dir === 'rtl'
+          ? 'إذا كان البريد مسجلاً، فسيصلك رابط إعادة تعيين كلمة المرور قريبًا.'
+          : 'If that email is registered, a password reset link will arrive shortly.',
+        'success'
+      );
+      setForgotModalOpen(false);
+      setForgotEmail('');
+    } catch (error) {
+      addToast(error?.message || (dir === 'rtl' ? 'تعذر إرسال رابط إعادة التعيين.' : 'Could not send the reset link.'), 'error');
+    } finally {
+      setForgotSubmitting(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (event) => {
+    event.preventDefault();
+    const passwordError = validatePassword(resetPasswordValue);
+    if (passwordError) {
+      setResetPasswordError(passwordError);
+      return;
+    }
+    if (resetPasswordValue !== resetPasswordConfirmation) {
+      setResetPasswordError(dir === 'rtl' ? 'كلمتا المرور غير متطابقتين.' : 'Passwords do not match.');
+      return;
+    }
+    if (!resetToken) {
+      setResetPasswordError(dir === 'rtl' ? 'رابط إعادة التعيين غير صالح أو منتهي.' : 'This reset link is invalid or expired.');
+      return;
+    }
+
+    setResetSubmitting(true);
+    setResetPasswordError('');
+    try {
+      await resetPassword({ token: resetToken, password: resetPasswordValue });
+      setResetComplete(true);
+    } catch (error) {
+      setResetPasswordError(error?.message || (dir === 'rtl' ? 'تعذر تغيير كلمة المرور.' : 'Could not update the password.'));
+    } finally {
+      setResetSubmitting(false);
+    }
   };
 
   const toggleMode = () => {
     setIsLogin((previous) => !previous);
+    setRegisterStep(1);
+    setTwoFactorChallenge(null);
+    setTwoFactorCode('');
+    setConfirmPassword('');
+    setErrors({});
+    useAuthStore.setState({ error: null, blockedStatus: null, blockedUser: null });
+  };
+
+  const startSignup = () => {
+    setShowAuthChoice(false);
+    setIsLogin(false);
     setRegisterStep(1);
     setTwoFactorChallenge(null);
     setTwoFactorCode('');
@@ -675,6 +881,107 @@ const countryOptions = useMemo(() => {
           </div>
 
           <section className={styles.formCard} data-auth-no-sparkle>
+            {resetMode ? (
+              <div className={styles.resetPanel}>
+                <div className={styles.formIntro}>
+                  <div className={styles.formLogo}><img src={logoUrl} alt={platformName} /></div>
+                  <h1 className={styles.choiceTitle}>
+                    {dir === 'rtl' ? 'إعادة تعيين كلمة المرور' : 'Reset your password'}
+                  </h1>
+                  <p className={styles.formSubtitle}>
+                    {dir === 'rtl' ? 'أدخل كلمة مرور جديدة لحسابك.' : 'Choose a new password for your account.'}
+                  </p>
+                </div>
+                {resetComplete ? (
+                  <div className={styles.resetSuccess}>
+                    <p>{dir === 'rtl' ? 'تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.' : 'Your password has been updated. You can sign in now.'}</p>
+                    <Button type="button" className={styles.primaryButton} onClick={() => navigate('/auth?mode=login')}>
+                      {dir === 'rtl' ? 'العودة لتسجيل الدخول' : 'Back to sign in'}
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleResetPasswordSubmit} className={styles.formStack}>
+                    <Input
+                      label={dir === 'rtl' ? 'كلمة المرور الجديدة' : 'New password'}
+                      type="password"
+                      placeholder="********"
+                      value={resetPasswordValue}
+                      onChange={(event) => setResetPasswordValue(event.target.value)}
+                      icon={<Lock className="h-4 w-4" />}
+                      className={styles.authInput}
+                      autoComplete="new-password"
+                    />
+                    <Input
+                      label={dir === 'rtl' ? 'تأكيد كلمة المرور' : 'Confirm password'}
+                      type="password"
+                      placeholder="********"
+                      value={resetPasswordConfirmation}
+                      onChange={(event) => setResetPasswordConfirmation(event.target.value)}
+                      icon={<Lock className="h-4 w-4" />}
+                      className={styles.authInput}
+                      autoComplete="new-password"
+                    />
+                    {resetPasswordError && <p role="alert" className={styles.resetError}>{resetPasswordError}</p>}
+                    <Button type="submit" className={styles.primaryButton} disabled={resetSubmitting}>
+                      {resetSubmitting
+                        ? (dir === 'rtl' ? 'جارٍ الحفظ...' : 'Saving...')
+                        : (dir === 'rtl' ? 'تغيير كلمة المرور' : 'Update password')}
+                    </Button>
+                  </form>
+                )}
+              </div>
+            ) : showAuthChoice ? (
+              <div className={styles.choicePanel}>
+                <div className={styles.choiceBrand}>
+                  <span>CLASH</span> <strong>cash</strong>
+                  <Sparkles aria-hidden="true" className={styles.choiceSparkle} />
+                </div>
+                <h1 className={styles.choiceTitle}>
+                  {dir === 'rtl' ? 'أهلاً بك في CLASH cash' : 'Welcome to CLASH cash'}
+                </h1>
+                <p className={styles.choiceSubtitle}>
+                  {dir === 'rtl' ? 'اختر طريقة تسجيل الدخول للمتابعة' : 'Choose how you would like to sign in'}
+                </p>
+
+                <div className={styles.choiceActions}>
+                  <Button
+                    type="button"
+                    className={styles.primaryButton}
+                    onClick={() => setShowAuthChoice(false)}
+                  >
+                    <Mail className="h-4 w-4" />
+                    {dir === 'rtl' ? 'تسجيل عبر الإيميل' : 'Continue with email'}
+                  </Button>
+                  <motion.button
+                    type="button"
+                    whileHover={reduceMotion ? undefined : { y: -2, scale: 1.01 }}
+                    whileTap={reduceMotion ? undefined : { scale: 0.99 }}
+                    onClick={handleGoogleAuth}
+                    disabled={isLoading}
+                    className={styles.googleButton}
+                  >
+                    <span><GoogleMark /></span>
+                    {dir === 'rtl' ? 'تسجيل عبر Google' : 'Continue with Google'}
+                  </motion.button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPrivacyModalOpen(true)}
+                  className={styles.privacyButton}
+                >
+                  {dir === 'rtl' ? 'سياسة الخصوصية' : 'Privacy Policy'}
+                </button>
+
+                <div className={styles.createAccount}>
+                  <span>{dir === 'rtl' ? 'ليس لديك حساب؟' : 'Don’t have an account?'}</span>
+                  <button type="button" onClick={startSignup}>
+                    {dir === 'rtl' ? 'إنشاء الحساب' : 'Create account'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+            <>
             <div className={styles.formIntro}>
               <div className={styles.formLogo}><img src={logoUrl} alt={platformName} /></div>
               <span className={styles.eyebrow}>{isLogin ? t('auth.login') : t('auth.register')}</span>
@@ -701,7 +1008,7 @@ const countryOptions = useMemo(() => {
               {!isLogin && (
                 <div className={styles.stepProgress} aria-label="تقدم التسجيل">
                   {[
-                    { index: 1, label: googleSetupPending ? 'Google' : 'البيانات الأساسية' },
+                    { index: 1, label: googleSetupPending ? (dir === 'rtl' ? 'استكمال البيانات' : 'Complete profile') : (dir === 'rtl' ? 'البيانات الأساسية' : 'Basic details') },
                     { index: 2, label: 'إعداد الحساب' },
                   ].map((step) => (
                     <div
@@ -727,7 +1034,14 @@ const countryOptions = useMemo(() => {
                     </div>
                     <div>
                       <h2>المصادقة الثنائية</h2>
-                      <p>أدخل كود التحقق المرسل إلى بريدك الإلكتروني لإكمال تسجيل الدخول.</p>
+                      <p>
+                        {dir === 'rtl'
+                          ? 'أدخل كود التحقق المرسل إلى بريدك الإلكتروني لإكمال تسجيل الدخول.'
+                          : 'Enter the verification code sent to your email to finish signing in.'}
+                        {twoFactorChallenge.demoCode
+                          ? (dir === 'rtl' ? ` كود التجربة: ${twoFactorChallenge.demoCode}` : ` Demo code: ${twoFactorChallenge.demoCode}`)
+                          : ''}
+                      </p>
                     </div>
                     <OtpInput value={twoFactorCode} onChange={setTwoFactorCode} disabled={isLoading} />
                   </motion.div>
@@ -769,7 +1083,14 @@ const countryOptions = useMemo(() => {
                         <input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />
                         <span>{dir === 'rtl' ? 'تذكرني' : 'Remember me'}</span>
                       </label>
-                      <button type="button" onClick={() => setForgotModalOpen(true)} className={styles.forgotLink}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForgotEmail(email);
+                          setForgotModalOpen(true);
+                        }}
+                        className={styles.forgotLink}
+                      >
                         {t('auth.forgotPassword')}
                       </button>
                     </div>
@@ -882,6 +1203,15 @@ const countryOptions = useMemo(() => {
                       </select>
                       {errors.currency && <p role="alert" className="mt-2 flex items-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-500/[0.07] px-2.5 py-2 text-xs font-semibold text-rose-700 dark:text-rose-300"><AlertCircle className="h-3.5 w-3.5 shrink-0" />{errors.currency}</p>}
                     </div>
+
+                    <CountryPhoneInput
+                      countryCode={phoneCountry}
+                      onCountryCodeChange={setPhoneCountry}
+                      value={phone}
+                      onChange={setPhone}
+                      error={errors.phone}
+                      language={dir === 'rtl' ? 'ar' : 'en'}
+                    />
 
                     <Input
                       label={dir === 'rtl' ? 'كود الدعوة (اختياري)' : 'Invitation code (optional)'}
@@ -1044,11 +1374,13 @@ const countryOptions = useMemo(() => {
                     onClick={() => setPrivacyModalOpen(true)}
                     className="font-black text-[var(--color-primary)] underline decoration-[color:rgb(var(--color-primary-rgb)/0.38)] underline-offset-4 transition-colors hover:text-[var(--color-primary-hover)]"
                   >
-                    {dir === 'rtl' ? 'الشروط والأحكام' : 'Terms and Conditions'}
+                    {dir === 'rtl' ? 'سياسة الخصوصية' : 'Privacy Policy'}
                   </button>
                 </p>
               </div>
             </form>
+            </>
+            )}
           </section>
         </motion.div>
       </main>
@@ -1064,8 +1396,8 @@ const countryOptions = useMemo(() => {
             <Button onClick={() => setForgotModalOpen(false)} variant="ghost">
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleForgotSubmit}>
-              {t('common.confirm')}
+            <Button onClick={handleForgotSubmit} disabled={forgotSubmitting}>
+              {forgotSubmitting ? t('common.loading') : t('common.confirm')}
             </Button>
           </div>
         )}
@@ -1089,7 +1421,7 @@ const countryOptions = useMemo(() => {
       <Modal
         isOpen={privacyModalOpen}
         onClose={() => setPrivacyModalOpen(false)}
-        title={dir === 'rtl' ? 'الشروط والأحكام' : 'Terms and Conditions'}
+        title={dir === 'rtl' ? 'سياسة الخصوصية' : 'Privacy Policy'}
         footer={(
           <div className="flex justify-end">
             <Button onClick={() => setPrivacyModalOpen(false)}>
@@ -1101,18 +1433,18 @@ const countryOptions = useMemo(() => {
         <div className="space-y-3 text-sm leading-7 text-[var(--color-text-secondary)]">
           <p>
             {dir === 'rtl'
-              ? `باستخدام ${platformName}، فإنك توافق على إدخال بيانات صحيحة والحفاظ على سرية حسابك وعدم استخدام المنصة في أي نشاط مخالف.`
-              : `By using ${platformName}, you agree to provide accurate information, protect your account, and avoid any prohibited activity.`}
+              ? `نستخدم بياناتك اللازمة لإنشاء حسابك وتشغيل خدمات ${platformName} ومعالجة طلباتك. ولا نطلب منك مشاركة كلمة المرور مع أي شخص.`
+              : `We use the information needed to create your account, operate ${platformName}, and process your requests. We will never ask you to share your password.`}
           </p>
           <p>
             {dir === 'rtl'
-              ? 'يرجى مراجعة تفاصيل الطلب بعناية قبل الدفع، فالمنتجات الرقمية لا يمكن استردادها بعد تأكيد التحويل وبدء تنفيذ الطلب.'
-              : 'Please review order details before payment. Digital products cannot be refunded after payment is confirmed and fulfillment begins.'}
+              ? 'تُستخدم بيانات الطلب والدفع لتنفيذ الخدمة ومتابعتها، وقد تُشارك فقط مع مزودي الخدمة اللازمين لإتمامها.'
+              : 'Order and payment details are used to fulfill and track your requests, and may be shared only with service providers needed to complete them.'}
           </p>
           <p>
             {dir === 'rtl'
-              ? 'يُعد إكمال التسجيل موافقة منك على هذه الشروط وعلى سياسات الحماية والتشغيل المعمول بها داخل المنصة.'
-              : 'Completing registration confirms your acceptance of these terms and the platform’s applicable operation and protection policies.'}
+              ? 'يمكنك التواصل مع الدعم لطلب المساعدة بخصوص بيانات حسابك أو خصوصيتك.'
+              : 'Contact support if you need help with your account information or privacy.'}
           </p>
         </div>
       </Modal>

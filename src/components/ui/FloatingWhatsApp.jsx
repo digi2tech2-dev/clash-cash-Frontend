@@ -47,7 +47,7 @@ const FloatingWhatsApp = () => {
 
   return (
     <>
-      {showPromo ? <span className="floating-whatsapp-promos">
+      {showPromo && user?.referralEnabled ? <span className="floating-whatsapp-promos">
         <Link
           to="/referral"
           className="floating-whatsapp-promo"
