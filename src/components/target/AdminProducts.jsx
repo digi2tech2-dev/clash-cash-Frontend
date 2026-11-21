@@ -52,7 +52,7 @@ const ProductModal = ({ isOpen, onClose, product, paymentMethods, onSave }) => {
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !targetAccountId.trim() || !Number(unitPrice) || !paymentMethodIds.length) return;
+    if (!name.trim() || !targetAccountId.trim() || !Number.isFinite(Number(unitPrice)) || Number(unitPrice) <= 0 || !paymentMethodIds.length) return;
     setIsSaving(true);
     try {
       const saved = await onSave({
@@ -81,7 +81,7 @@ const ProductModal = ({ isOpen, onClose, product, paymentMethods, onSave }) => {
       footer={(
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="secondary" onClick={onClose}>إلغاء</Button>
-          <Button type="button" onClick={handleSave} disabled={isSaving || !name.trim() || !targetAccountId.trim() || !Number(unitPrice) || !paymentMethods.length || !paymentMethodIds.length}>
+          <Button type="button" onClick={handleSave} disabled={isSaving || !name.trim() || !targetAccountId.trim() || !Number.isFinite(Number(unitPrice)) || Number(unitPrice) <= 0 || !paymentMethods.length || !paymentMethodIds.length}>
             {isSaving ? 'جارٍ الحفظ...' : (product ? 'حفظ التعديل' : 'حفظ التطبيق')}
           </Button>
         </div>

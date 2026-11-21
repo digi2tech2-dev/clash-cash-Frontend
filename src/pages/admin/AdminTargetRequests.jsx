@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Boxes, CheckCircle2, ClipboardList, Target, RefreshCw, Search } from 'lucide-react';
 import AdminOrdersTable from '../../components/target/AdminOrdersTable';
 import AdminProducts from '../../components/target/AdminProducts';
@@ -60,7 +60,7 @@ const AdminTargetRequests = () => {
     return () => { active = false; };
   }, [requestPage, requestStatus, appliedSearch, requestRevision]);
 
-  const paymentMethods = getTargetPaymentMethods(paymentSettings);
+  const paymentMethods = useMemo(() => getTargetPaymentMethods(paymentSettings), [paymentSettings]);
 
   const handleAddProduct = async (payload) => {
     try {
@@ -69,7 +69,7 @@ const AdminTargetRequests = () => {
       addToast('تم إنشاء تطبيق التارجت بنجاح.', 'success');
       return true;
     } catch (error) {
-      addToast(error?.status === 413 ? 'حجم صورة التطبيق أكبر من المسموح به على الخادم. اختر صورة أصغر وحاول مرة أخرى.' : (error?.message || 'تعذرت إضافة تطبيق التارجت.'), 'error');
+      addToast(error?.status === 413 ? 'رفض الخادم رفع الصورة بسبب حد حجم الطلب. يرجى مراجعة إعدادات الرفع على الخادم.' : (error?.message || 'تعذرت إضافة تطبيق التارجت.'), 'error');
       return false;
     }
   };
@@ -81,7 +81,7 @@ const AdminTargetRequests = () => {
       addToast('تم تحديث تطبيق التارجت بنجاح.', 'success');
       return true;
     } catch (error) {
-      addToast(error?.status === 413 ? 'حجم صورة التطبيق أكبر من المسموح به على الخادم. اختر صورة أصغر وحاول مرة أخرى.' : (error?.message || 'تعذر تحديث تطبيق التارجت.'), 'error');
+      addToast(error?.status === 413 ? 'رفض الخادم رفع الصورة بسبب حد حجم الطلب. يرجى مراجعة إعدادات الرفع على الخادم.' : (error?.message || 'تعذر تحديث تطبيق التارجت.'), 'error');
       return false;
     }
   };

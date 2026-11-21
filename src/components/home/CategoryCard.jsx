@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../ui/Button';
+import { resolveImageUrl } from '../../utils/imageUrl';
 
 const CategoryCard = ({
   category,
@@ -19,33 +20,33 @@ const CategoryCard = ({
       <button
         type="button"
         onClick={() => onSelect(category.id)}
-        className="storefront-category-card storefront-category-card--plain group relative isolate flex w-full origin-center select-none flex-col rounded-[1.4rem] text-start transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.002]"
+        className="storefront-product-card group relative isolate flex w-full origin-center select-none flex-col rounded-[1.25rem] p-2 text-start transition-all duration-200 ease-out hover:-translate-y-0.5"
         aria-label={displayName}
         style={{ animation: 'page-fade-in 280ms ease-out both', animationDelay: `${Math.min(index * 35, 210)}ms` }}
       >
-        <div className="storefront-category-media relative overflow-hidden rounded-[1.2rem]">
+        <div className="storefront-product-media pointer-events-none relative overflow-hidden rounded-[1rem]">
           {imageSrc ? (
             <img
-              src={imageSrc}
+              src={resolveImageUrl(imageSrc)}
               alt={displayName}
               loading="lazy"
               decoding="async"
-              sizes="(max-width: 640px) 45vw, (max-width: 1024px) 24vw, 18vw"
-              className="relative block aspect-square h-full w-full bg-transparent object-contain object-center transition duration-500 group-hover:scale-[1.05]"
+              sizes="(max-width: 640px) 32vw, (max-width: 1024px) 24vw, 18vw"
+              className="relative block aspect-square h-full w-full bg-transparent object-contain object-center p-2 transition duration-500 group-hover:scale-[1.04]"
             />
           ) : (
             <div
               aria-hidden="true"
-              className="relative grid aspect-square h-full w-full place-items-center rounded-[1.2rem] border border-[color:rgb(var(--color-border-rgb)/0.72)] bg-[color:rgb(var(--color-surface-rgb)/0.72)] text-2xl font-black text-[var(--color-text-secondary)] transition duration-500 group-hover:scale-[1.03]"
+              className="relative grid aspect-square h-full w-full place-items-center rounded-[1rem] border border-[color:rgb(var(--color-border-rgb)/0.72)] bg-[color:rgb(var(--color-surface-rgb)/0.72)] text-2xl font-black text-[var(--color-text-secondary)] transition duration-500 group-hover:scale-[1.03]"
             >
               {String(displayName).slice(0, 1).toUpperCase()}
             </div>
           )}
         </div>
 
-        <h3 className="storefront-category-title mt-2 line-clamp-2 text-sm font-semibold leading-5 text-[var(--color-text)] transition-colors duration-200 group-hover:text-[var(--color-primary)]">
-          {displayName}
-        </h3>
+        <div className="storefront-product-title pointer-events-none relative z-20 mt-2 w-full text-center transition-colors duration-200 group-hover:text-[var(--color-primary)]">
+          <h3 className="line-clamp-1 text-[0.78rem] font-bold leading-5 text-[var(--color-text)] sm:text-sm" dir="auto">{displayName}</h3>
+        </div>
       </button>
     );
   }

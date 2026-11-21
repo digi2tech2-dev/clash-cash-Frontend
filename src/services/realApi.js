@@ -12,7 +12,6 @@
 
 import axios from 'axios';
 import { devLogger } from '../utils/devLogger';
-import { prepareTargetAppImage } from '../utils/targetAppImage';
 import { getWalletBalanceSummary } from '../utils/money';
 import { isSiteWalletPaymentMethod, normalizePaymentGroups } from '../utils/paymentSettings';
 import {
@@ -1325,7 +1324,45 @@ const isFileLike = (value) => (
   || (typeof Blob !== 'undefined' && value instanceof Blob)
 );
 
-const buildTargetAppFormData = async (payload = {}, { partial = false } = {}) => {
+const uploadTargetAppImage = async (file) => {
+  const chunkSize = 128 * 1024;
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('اختر صورة بصيغة JPG أو PNG أو WebP.');
+  if (!file.size || file.size > 20 * 1024 * 1024) throw new Error('يجب ألا يزيد حجم صورة التطبيق عن 20 ميجابايت.');
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const uploadId = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  const total = Math.ceil(file.size / chunkSize);
+  try {
+  for (let index = 0; index < total; index += 1) {
+    const blob = file.slice(index * chunkSize, (index + 1) * chunkSize);
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1]);
+      reader.onerror = () => reject(new Error('تعذر قراءة صورة التطبيق. حاول مرة أخرى.'));
+      reader.readAsDataURL(blob);
+    });
+    const res = await http.post('/admin/target-apps/image-chunks', { uploadId, index, total, size: file.size, mime: file.type, data: base64 });
+    const result = unwrap(res);
+    if (index === total - 1) {
+      if (!result?.complete || !result.image) throw new Error('تعذر إكمال رفع الصورة. حاول مرة أخرى.');
+      return result.image;
+    }
+  }
+  throw new Error('تعذر رفع الصورة. حاول مرة أخرى.');
+  } catch (error) {
+    void http.delete(`/admin/target-apps/image-chunks/${uploadId}`).catch(() => {});
+    throw error;
+  }
+};
+
+const prepareTargetAppPayload = async (payload) => {
+  const image = payload.imageFile || payload.file || payload.image;
+  if (!isFileLike(image)) return payload;
+  const imagePath = await uploadTargetAppImage(image);
+  return { ...payload, image: imagePath, imageFile: null, file: null };
+};
+
+const buildTargetAppFormData = (payload = {}, { partial = false } = {}) => {
   const formData = new FormData();
   if (!partial || payload.name !== undefined) appendIfPresent(formData, 'name', String(payload.name || '').trim());
   if (!partial || payload.targetAccountId !== undefined || payload.receivingAccountId !== undefined) {
@@ -1341,7 +1378,7 @@ const buildTargetAppFormData = async (payload = {}, { partial = false } = {}) =>
   if (payload.isActive !== undefined) formData.append('isActive', String(payload.isActive !== false));
   const image = payload.imageFile || payload.file || payload.image;
   if (isFileLike(image)) {
-    formData.append('image', await prepareTargetAppImage(image));
+    formData.append('image', image);
   } else if (typeof image === 'string' && image && !image.startsWith('data:') && !/^https?:\/\//i.test(image)) {
     formData.append('image', image);
   }
@@ -4099,14 +4136,14 @@ const realApi = {
     },
 
     create: async (payload = {}) => {
-      const formData = await buildTargetAppFormData(payload);
+      const formData = buildTargetAppFormData(await prepareTargetAppPayload(payload));
       const res = await http.post('/admin/target-apps', formData);
       const data = unwrap(res);
       return normaliseTargetApp(data?.app || data);
     },
 
     update: async (id, payload = {}) => {
-      const formData = await buildTargetAppFormData(payload, { partial: true });
+      const formData = buildTargetAppFormData(await prepareTargetAppPayload(payload), { partial: true });
       const res = await http.patch(`/admin/target-apps/${id}`, formData);
       const data = unwrap(res);
       return normaliseTargetApp(data?.app || data);
