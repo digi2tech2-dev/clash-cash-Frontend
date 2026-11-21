@@ -1,3 +1,4 @@
+import AdminTeam from './AdminTeam';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, Circle, Plus, Search, ShieldCheck, Trash2, UserCog, UserPlus } from 'lucide-react';
 import useAdminStore from '../../store/useAdminStore';
@@ -511,4 +512,11 @@ const AdminSupervisors = () => {
   );
 };
 
-export default AdminSupervisors;
+const AdminSupervisorsWithTeam = () => (
+  <div className="space-y-4">
+    <AdminTeam />
+    <AdminSupervisors />
+  </div>
+);
+
+export default AdminSupervisorsWithTeam;
