@@ -15,6 +15,7 @@ const ProductModal = ({ isOpen, onClose, product, paymentMethods, onSave }) => {
   const [unitPrice, setUnitPrice] = useState('');
   const [image, setImage] = useState(null);
   const [paymentMethodIds, setPaymentMethodIds] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -50,20 +51,25 @@ const ProductModal = ({ isOpen, onClose, product, paymentMethods, onSave }) => {
     ));
   };
 
-  const handleSave = () => {
-    if (!name.trim() || !Number(unitPrice) || !paymentMethodIds.length) return;
-    onSave({
-      name: name.trim(),
-      targetAccountId: targetAccountId.trim(),
-      receivingAccountId: targetAccountId.trim(),
-      unitPrice: Number(unitPrice),
-      image: image?.file || image?.preview || '',
-      imageFile: image?.file || null,
-      imagePreview: image?.preview || '',
-      allowedPaymentMethods: paymentMethodIds,
-      paymentMethodIds,
-    });
-    onClose();
+  const handleSave = async () => {
+    if (!name.trim() || !targetAccountId.trim() || !Number(unitPrice) || !paymentMethodIds.length) return;
+    setIsSaving(true);
+    try {
+      const saved = await onSave({
+        name: name.trim(),
+        targetAccountId: targetAccountId.trim(),
+        receivingAccountId: targetAccountId.trim(),
+        unitPrice: Number(unitPrice),
+        image: image?.file || image?.preview || '',
+        imageFile: image?.file || null,
+        imagePreview: image?.preview || '',
+        allowedPaymentMethods: paymentMethodIds,
+        paymentMethodIds,
+      });
+      if (saved !== false) onClose();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -75,8 +81,8 @@ const ProductModal = ({ isOpen, onClose, product, paymentMethods, onSave }) => {
       footer={(
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="secondary" onClick={onClose}>إلغاء</Button>
-          <Button type="button" onClick={handleSave} disabled={!paymentMethods.length || !paymentMethodIds.length}>
-            {product ? 'حفظ التعديل' : 'حفظ التطبيق'}
+          <Button type="button" onClick={handleSave} disabled={isSaving || !name.trim() || !targetAccountId.trim() || !Number(unitPrice) || !paymentMethods.length || !paymentMethodIds.length}>
+            {isSaving ? 'جارٍ الحفظ...' : (product ? 'حفظ التعديل' : 'حفظ التطبيق')}
           </Button>
         </div>
       )}
@@ -143,12 +149,12 @@ const AdminProducts = ({ products, paymentMethods, onAdd, onUpdate, onDelete }) 
     setIsModalOpen(true);
   };
 
-  const handleSave = (payload) => {
+  const handleSave = async (payload) => {
     if (editingProduct) {
-      onUpdate(editingProduct.id, payload);
+      await onUpdate(editingProduct.id, payload);
       return;
     }
-    onAdd(payload);
+    await onAdd(payload);
   };
 
   return (

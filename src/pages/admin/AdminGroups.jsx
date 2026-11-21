@@ -248,7 +248,7 @@ const AdminGroups = () => {
             <p className="max-w-3xl text-sm leading-6 text-[var(--color-text-secondary)]">
               {tx(
                 'عدّل أسماء وخصومات المجموعات مع مشاهدة أعضائها الحاليين، وأي حذف لمجموعة فيها مستخدمون يتم فقط بعد نقلهم إلى مجموعة أخرى.',
-                'Edit group names and discounts while seeing their current members, and any group with members must transfer them before deletion.'
+                'Edit group names and profit percentages while seeing their current members, and any group with members must transfer them before deletion.'
               )}
             </p>
           </div>
@@ -288,7 +288,7 @@ const AdminGroups = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[28%] px-3">{t('groupName')}</TableHead>
-              <TableHead className="w-[15%] px-2 text-center">{t('discountPercent')}</TableHead>
+              <TableHead className="w-[15%] px-2 text-center">{tx('نسبة الربح (%)', 'Profit percentage (%)')}</TableHead>
               <TableHead className="w-[39%] px-3">{tx('الأعضاء الحاليون', 'Current Members')}</TableHead>
               <TableHead className="w-[18%] px-3 text-end">{t('actions')}</TableHead>
             </TableRow>
@@ -400,7 +400,7 @@ const AdminGroups = () => {
             />
 
             <Input
-              label={t('discountPercent')}
+              label={tx('نسبة الربح (%)', 'Profit percentage (%)')}
               type="number"
               min="0"
               max="100"

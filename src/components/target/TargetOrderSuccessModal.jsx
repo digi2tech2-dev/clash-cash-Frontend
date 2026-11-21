@@ -44,7 +44,11 @@ const SummaryItem = ({ icon: Icon, label, value, tone = 'emerald' }) => (
 );
 
 const getPaymentMethodLabel = (order) => {
-  if (isSiteWalletPaymentMethod(order.paymentMethodId || order.paymentMethod || order.paymentMethodName)) {
+  if (isSiteWalletPaymentMethod({
+    id: order.paymentMethodId || order.paymentMethodIdSnapshot,
+    name: order.paymentMethodName || order.paymentMethodNameSnapshot || order.paymentMethod,
+    type: order.paymentMethodTypeSnapshot,
+  })) {
     return 'محفظة الموقع';
   }
   return order.paymentMethodName || order.paymentMethod || '-';

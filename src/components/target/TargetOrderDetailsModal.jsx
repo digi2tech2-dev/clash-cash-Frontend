@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CalendarClock, CheckCircle2, Coins, Copy, CreditCard, Hash, Image as ImageIcon, Mail, Target, User, XCircle } from 'lucide-react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
+import UploadProof from './UploadProof';
 import { formatDateTime, formatNumber } from '../../utils/intl';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import {
@@ -83,6 +84,12 @@ const TargetOrderDetailsModal = ({
   isUpdating = false,
   onStatusChange,
 }) => {
+  const [payoutProof, setPayoutProof] = useState(null);
+
+  useEffect(() => {
+    setPayoutProof(null);
+  }, [order?.id]);
+
   if (!order) return null;
 
   const proofUrl = resolveImageUrl(order.screenshotProof || order.proofImage || '');
@@ -102,8 +109,13 @@ const TargetOrderDetailsModal = ({
     || '';
   const transferNumber = order.transferNumber || order.paymentAccount;
   const transactionNumber = order.transactionNumber || order.transactionId || order.paymentReference;
-  const isSiteWallet = isSiteWalletPaymentMethod(order.paymentMethodId || order.paymentMethod || order.paymentMethodName);
+  const isSiteWallet = isSiteWalletPaymentMethod({
+    id: order.paymentMethodId || order.paymentMethodIdSnapshot,
+    name: order.paymentMethodName || order.paymentMethodNameSnapshot || order.paymentMethod,
+    type: order.paymentMethodTypeSnapshot,
+  });
   const rejectionReason = order.rejectionReason || order.adminNotes || '';
+  const payoutProofUrl = resolveImageUrl(order.payoutProof || order.payoutReceipt || '');
 
   return (
     <Modal
@@ -152,6 +164,7 @@ const TargetOrderDetailsModal = ({
           <DetailItem icon={Hash} label="ايدي المستلم للتارجت" value={targetAccountId} copyable />
           <DetailItem icon={Hash} label="معرّف الحساب" value={accountId} copyable />
           <DetailItem icon={CreditCard} label="طريقة الدفع" value={order.paymentMethod || order.paymentMethodName} />
+          {order.payoutAmount != null ? <DetailItem icon={Coins} label={isSiteWallet ? 'المبلغ المضاف للمحفظة' : 'المبلغ المحول للعميل'} value={`${formatNumber(order.payoutAmount, 'en-US', { maximumFractionDigits: 2 })} ${order.payoutCurrency || 'EGP'}`} /> : null}
           {!isSiteWallet ? <DetailItem icon={Copy} label="رقم التحويل" value={transferNumber} copyable /> : null}
           <DetailItem icon={Hash} label="رقم العملية" value={transactionNumber} copyable />
           <DetailItem icon={CalendarClock} label="آخر تحديث" value={formatDateTime(order.updatedAt || order.reviewedAt || order.createdAt, 'en-US')} />
@@ -183,6 +196,29 @@ const TargetOrderDetailsModal = ({
           </div>
         )}
 
+        {payoutProofUrl ? (
+          <div className="rounded-[1.35rem] border border-emerald-500/20 bg-emerald-500/[0.05] p-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-sm font-bold text-[var(--color-text)]">إثبات دفع المبلغ للعميل</p>
+              <a href={payoutProofUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[var(--color-primary)] hover:underline">فتح الصورة</a>
+            </div>
+            <img src={payoutProofUrl} alt="إثبات دفع المبلغ للعميل" className="max-h-[28rem] w-full rounded-[1rem] border border-emerald-500/15 object-contain" />
+          </div>
+        ) : null}
+
+        {canManage && status === 'PENDING' && !isSiteWallet ? (
+          <div className="rounded-[1.25rem] border border-amber-500/20 bg-amber-500/[0.05] p-3">
+            <p className="mb-3 text-sm font-bold text-[var(--color-text)]">ارفع إثبات تحويل مستحقات العميل قبل قبول الطلب.</p>
+            <UploadProof
+              label="إثبات الدفع للعميل"
+              title="ارفع صورة التحويل"
+              hint="PNG أو JPG أو WebP"
+              value={payoutProof}
+              onChange={setPayoutProof}
+            />
+          </div>
+        ) : null}
+
         {status === 'REJECTED' && rejectionReason ? (
           <div className="rounded-[1.2rem] border border-[color:rgb(var(--color-error-rgb)/0.24)] bg-[color:rgb(var(--color-error-rgb)/0.08)] p-4 text-sm text-[var(--color-error)]">
             <p className="mb-1 font-bold">سبب الرفض</p>
@@ -203,12 +239,15 @@ const TargetOrderDetailsModal = ({
             </Button>
             <Button
               type="button"
-              disabled={isUpdating || status === 'APPROVED'}
-              onClick={() => onStatusChange?.(order.id, 'APPROVED')}
+              disabled={isUpdating || status === 'APPROVED' || (!isSiteWallet && !payoutProof?.file)}
+              onClick={() => onStatusChange?.(order.id, 'APPROVED', {
+                payoutProof: payoutProof?.file,
+                payoutProofPreview: payoutProof?.preview,
+              })}
               className="rounded-xl"
             >
               <CheckCircle2 className="h-4 w-4" />
-              قبول
+              {isSiteWallet ? 'قبول وإضافة الرصيد' : 'قبول بعد إرسال المبلغ'}
             </Button>
             <Button
               type="button"

@@ -12,7 +12,7 @@ import useSystemStore from '../../store/useSystemStore';
 import { useToast } from '../../components/ui/Toast';
 import { formatNumber } from '../../utils/intl';
 import { PERMISSIONS, hasPermission } from '../../utils/permissions';
-import { getTargetPaymentMethods } from '../../utils/paymentSettings';
+import { getTargetPaymentMethods, isSiteWalletPaymentMethod } from '../../utils/paymentSettings';
 
 const AdminTargetRequests = () => {
   const {
@@ -43,13 +43,27 @@ const AdminTargetRequests = () => {
   const paymentMethods = getTargetPaymentMethods(paymentSettings);
 
   const handleAddProduct = async (payload) => {
-    await addProduct(payload);
-    addToast('تم إنشاء تطبيق التارجت بنجاح.', 'success');
+    try {
+      await addProduct(payload);
+      await loadApps({ includeInactive: true }).catch(() => null);
+      addToast('تم إنشاء تطبيق التارجت بنجاح.', 'success');
+      return true;
+    } catch (error) {
+      addToast(error?.message || 'تعذرت إضافة تطبيق التارجت.', 'error');
+      return false;
+    }
   };
 
   const handleUpdateProduct = async (id, payload) => {
-    await updateProduct(id, payload);
-    addToast('تم تحديث تطبيق التارجت بنجاح.', 'success');
+    try {
+      await updateProduct(id, payload);
+      await loadApps({ includeInactive: true }).catch(() => null);
+      addToast('تم تحديث تطبيق التارجت بنجاح.', 'success');
+      return true;
+    } catch (error) {
+      addToast(error?.message || 'تعذر تحديث تطبيق التارجت.', 'error');
+      return false;
+    }
   };
 
   const handleDeleteProduct = async (id) => {
@@ -57,7 +71,7 @@ const AdminTargetRequests = () => {
     addToast('تم تعطيل تطبيق التارجت.', 'success');
   };
 
-  const handleStatusChange = async (id, status) => {
+  const handleStatusChange = async (id, status, payload = {}) => {
     if (!canConfirmTargetRequests) {
       addToast('ليس لديك صلاحية مراجعة طلبات التارجت.', 'error');
       return;
@@ -68,11 +82,30 @@ const AdminTargetRequests = () => {
       return;
     }
 
+    const targetRequest = requests.find((request) => String(request.id) === String(id));
+    const walletPayout = isSiteWalletPaymentMethod({
+      id: targetRequest?.paymentMethodId || targetRequest?.paymentMethodIdSnapshot,
+      name: targetRequest?.paymentMethodName || targetRequest?.paymentMethodNameSnapshot || targetRequest?.paymentMethod,
+      type: targetRequest?.paymentMethodTypeSnapshot,
+    });
+    if (String(status).toUpperCase() === 'APPROVED' && !walletPayout && !payload.payoutProof) {
+      setSelectedRequest(targetRequest || { id });
+      addToast('افتح تفاصيل الطلب وارفع إثبات تحويل مستحقات العميل قبل القبول.', 'error');
+      return;
+    }
+
     setIsStatusUpdating(true);
     try {
-      const updated = await updateRequestStatus(id, status, { rejectionReason: '' });
+      const updated = await updateRequestStatus(id, status, { rejectionReason: '', ...payload });
       setSelectedRequest((current) => (String(current?.id) === String(id) ? { ...current, ...updated } : current));
-      addToast('تم تحديث حالة طلب التارجت.', 'success');
+      addToast(
+        String(status).toUpperCase() === 'APPROVED' && walletPayout
+          ? `تم قبول الطلب وإضافة ${updated?.payoutAmount ?? targetRequest?.totalPrice ?? 0} ${updated?.payoutCurrency || 'EGP'} إلى رصيد العميل.`
+          : 'تم تحديث حالة طلب التارجت.',
+        'success'
+      );
+    } catch (error) {
+      addToast(error?.message || 'تعذر تحديث حالة طلب التارجت.', 'error');
     } finally {
       setIsStatusUpdating(false);
     }

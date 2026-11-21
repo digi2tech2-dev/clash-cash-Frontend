@@ -222,6 +222,8 @@ const AdminDashboard = () => {
   const [rejectingUserId, setRejectingUserId] = useState('');
   const [supplierBalances, setSupplierBalances] = useState([]);
   const [isLoadingSupplierBalances, setIsLoadingSupplierBalances] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
 
   const isArabic = String(i18n.resolvedLanguage || i18n.language || 'ar').toLowerCase().startsWith('ar');
   const locale = getNumericLocale(isArabic ? 'ar-EG' : 'en-US');
@@ -1047,6 +1049,29 @@ const AdminDashboard = () => {
       />
 
       <MaintenanceControl />
+
+      {String(user?.role || '').toLowerCase() === 'admin' && (
+        <Card variant="premium" className="p-4 sm:p-6">
+          <form onSubmit={async (event) => {
+            event.preventDefault();
+            const message = announcement.trim();
+            if (!message || sendingAnnouncement) return;
+            setSendingAnnouncement(true);
+            try {
+              const result = await apiClient.notifications.send({ allCustomers: true, title: isArabic ? 'رسالة من الإدارة' : 'Message from administration', message });
+              setAnnouncement('');
+              addToast(isArabic ? `تم إرسال الإشعار إلى ${result?.sent ?? 0} عميل.` : `Notification sent to ${result?.sent ?? 0} customers.`, 'success');
+            } catch (error) {
+              addToast(error?.message || (isArabic ? 'تعذر إرسال الإشعار.' : 'Unable to send notification.'), 'error');
+            } finally { setSendingAnnouncement(false); }
+          }} className="space-y-3">
+            <h2 className="text-base font-bold">{isArabic ? 'إرسال إشعار لكل العملاء' : 'Send a notification to all customers'}</h2>
+            <label htmlFor="customer-announcement" className="block text-sm text-[var(--color-text-secondary)]">{isArabic ? 'نص الرسالة' : 'Message'}</label>
+            <textarea id="customer-announcement" required maxLength={2000} rows={3} value={announcement} onChange={(event) => setAnnouncement(event.target.value)} className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-sm text-[var(--color-text)]" />
+            <button type="submit" disabled={sendingAnnouncement || !announcement.trim()} className="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{sendingAnnouncement ? (isArabic ? 'جارٍ الإرسال...' : 'Sending...') : (isArabic ? 'إرسال الإشعار' : 'Send notification')}</button>
+          </form>
+        </Card>
+      )}
 
       <Card variant="premium" className="admin-dashboard-filter-card overflow-visible p-4 sm:p-6">
         <DashboardDateRangeFilter

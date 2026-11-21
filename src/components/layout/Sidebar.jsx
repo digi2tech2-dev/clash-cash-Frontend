@@ -169,7 +169,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile }) => {
     },
     { icon: UserRound, label: t('sidebar.myAccount', { defaultValue: dir === 'rtl' ? 'حسابي' : 'My Account' }), path: '/account', roles: ['admin', 'customer', ...SUPERVISOR_ROLES] },
     { icon: ShieldCheck, label: t('sidebar.accountProtection', { defaultValue: dir === 'rtl' ? 'حماية الحساب' : 'Account Security' }), path: '/account-security', roles: ['admin', 'customer', ...SUPERVISOR_ROLES] },
-    { icon: Gift, label: dir === 'rtl' ? 'رابط الإحالة اكسب واسحب' : 'Referral Link — Earn & Withdraw', path: '/referral', roles: ['customer'] },
+    { icon: Gift, label: dir === 'rtl' ? 'رابط الإحالة اكسب واسحب' : 'Referral Link — Earn & Withdraw', path: '/referral', roles: ['customer'], visible: (currentUser) => currentUser?.referralEnabled === true },
     {
       icon: ShoppingBag,
       label: t('sidebar.myOrders', { defaultValue: dir === 'rtl' ? 'طلباتي' : 'My Orders' }),
@@ -184,7 +184,6 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile }) => {
       roles: ['customer', 'admin', ...SUPERVISOR_ROLES],
       visible: (currentUser) => currentUser?.isApiEnabled === true,
     },
-    { icon: Code2, label: dir === 'rtl' ? 'تم الإنشاء بواسطة' : 'Created By', path: '/created-by', roles: ['customer'] },
     { icon: UsersRound, label: t('sidebar.users'), path: '/admin/users', roles: ADMIN_NAV_ROLES, permission: PERMISSIONS.ADMIN_USERS, section: 'admin' },
     { icon: Share2, label: dir === 'rtl' ? 'أرباح كود الإحالة' : 'Referral Earnings', path: '/admin/referrals', roles: ADMIN_NAV_ROLES, section: 'admin' },
     { icon: UserCog, label: t('sidebar.supervisors'), path: '/admin/supervisors', roles: ['admin'], section: 'admin' },

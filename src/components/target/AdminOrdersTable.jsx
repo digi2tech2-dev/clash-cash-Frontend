@@ -30,7 +30,11 @@ const getPaymentMethodLabel = (request, isSiteWallet) => {
 
 const MobileRequestCard = ({ request, onStatusChange, onViewDetails, canConfirm }) => {
   const normalizedStatus = normalizeTargetOrderStatus(request.status);
-  const isSiteWallet = isSiteWalletPaymentMethod(request.paymentMethodId || request.paymentMethod || request.paymentMethodName);
+  const isSiteWallet = isSiteWalletPaymentMethod({
+    id: request.paymentMethodId || request.paymentMethodIdSnapshot,
+    name: request.paymentMethodName || request.paymentMethodNameSnapshot || request.paymentMethod,
+    type: request.paymentMethodTypeSnapshot,
+  });
   const proofUrl = request.screenshotProof || request.proofImage;
 
   return (
@@ -163,7 +167,11 @@ const AdminOrdersTable = ({ requests = [], onStatusChange, onViewDetails, canCon
       <TableBody>
         {requests.map((request) => {
           const normalizedStatus = normalizeTargetOrderStatus(request.status);
-          const isSiteWallet = isSiteWalletPaymentMethod(request.paymentMethodId || request.paymentMethod || request.paymentMethodName);
+          const isSiteWallet = isSiteWalletPaymentMethod({
+            id: request.paymentMethodId || request.paymentMethodIdSnapshot,
+            name: request.paymentMethodName || request.paymentMethodNameSnapshot || request.paymentMethod,
+            type: request.paymentMethodTypeSnapshot,
+          });
           return (
           <TableRow key={request.id}>
             <TableCell>

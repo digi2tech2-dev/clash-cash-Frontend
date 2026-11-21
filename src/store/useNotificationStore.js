@@ -173,7 +173,7 @@ const normalizeEnglishNotificationText = (value, options = {}) => {
 const normalizeNotification = (item = {}) => {
   const sectionName = String(item.sectionName || item.categoryName || item.categoryTitle || item.section || '').trim();
   const rawMessage = String(item.message || '').trim();
-  const normalizedMessage = normalizeEnglishNotificationText(rawMessage, {
+  const normalizedMessage = item.source === 'ADMIN_ANNOUNCEMENT' ? rawMessage : normalizeEnglishNotificationText(rawMessage, {
     isTitle: false,
     forceArabic: shouldForceArabicForBackoffice(),
   });

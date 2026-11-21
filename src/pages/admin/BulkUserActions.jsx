@@ -25,6 +25,8 @@ export default function BulkUserActions({ users, onClose, onRefresh, canManageUs
   const toggle = (id) => setSelected((items) => items.includes(id) ? items.filter((v) => v !== id) : [...items, id]);
   const run = async (action) => {
     const descriptions = { apiOff: 'إيقاف API للحسابات', apiOn: 'تفعيل API للحسابات', suspend: 'رفض أو إيقاف الحسابات', delete: 'حذف الحسابات', price: 'تعيين السعر للمنتجات والمستخدمين', productApiOff: 'إخفاء المنتجات من API للمستخدمين', productApiOn: 'إظهار المنتجات في API للمستخدمين' };
+    descriptions.referralOn = 'تفعيل الإحالة للمستخدمين';
+    descriptions.referralOff = 'إيقاف الإحالة للمستخدمين';
     const productAction = ['price', 'productApiOff', 'productApiOn'].includes(action);
     if (productAction && !selected.length) { setMessage('حدد منتجًا واحدًا على الأقل.'); return; }
     const rawPrice = price.trim();
@@ -36,7 +38,8 @@ export default function BulkUserActions({ users, onClose, onRefresh, canManageUs
     for (const user of users) {
       for (const productId of productAction ? selected : [null]) {
         try {
-          if (action === 'apiOff' || action === 'apiOn') await apiClient.users.updateProfile(user.id, { isApiEnabled: action === 'apiOn' });
+          if (action === 'referralOn' || action === 'referralOff') await apiClient.users.updateProfile(user.id, { referralEnabled: action === 'referralOn' });
+          else if (action === 'apiOff' || action === 'apiOn') await apiClient.users.updateProfile(user.id, { isApiEnabled: action === 'apiOn' });
           else if (action === 'suspend') await apiClient.users.updateStatus(user.id, 'rejected');
           else if (action === 'delete') await apiClient.users.delete(user.id);
           else if (action === 'price') await apiClient.users.setUserProductPrice(user.id, productId, rawPrice);
@@ -62,6 +65,7 @@ export default function BulkUserActions({ users, onClose, onRefresh, canManageUs
       <div className="flex flex-wrap gap-2 text-xs font-bold"><span className="rounded-full bg-[var(--color-primary)]/10 px-3 py-1.5 text-[var(--color-primary)]">{users.length} مستخدم محدد</span><span className="rounded-full bg-[var(--color-surface)] px-3 py-1.5">{selected.length} منتج محدد</span></div>
       <p className="break-words text-xs leading-6 text-[var(--color-text-secondary)]">{users.map((u) => u.name || u.email || u.id).join('، ')}</p>
       <div className="space-y-3 rounded-2xl border border-[var(--color-border)] p-4"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-[var(--color-primary)]" /><h3 className="text-sm font-black">إدارة الحسابات</h3></div>
+        {canManageUsers && <div className="flex flex-wrap gap-2"><button type="button" className={button} disabled={busy} onClick={() => run('referralOn')}>تفعيل الإحالة للمحددين</button><button type="button" className={button} disabled={busy} onClick={() => run('referralOff')}>إيقاف الإحالة للمحددين</button></div>}
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {canManageUsers && <><button type="button" className={button} disabled={busy} onClick={() => run('apiOff')}>إيقاف API</button><button type="button" className={button} disabled={busy} onClick={() => run('apiOn')}>تفعيل API</button><button type="button" className={`${button} text-red-600`} disabled={busy} onClick={() => run('delete')}>حذف المستخدمين</button></>}
           {canConfirmAccounts && <button type="button" className={`${button} text-red-600`} disabled={busy} onClick={() => run('suspend')}>رفض أو إيقاف الحسابات</button>}

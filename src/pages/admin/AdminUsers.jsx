@@ -42,7 +42,7 @@ import apiClient from '../../services/client';
 import { normalizeBillingMode, normalizeQuota } from '../../utils/billing';
 import BulkUserActions from './BulkUserActions';
 
-const FILTER_OPTIONS = ['all', 'approved', 'highest', 'debtors', 'deleted'];
+const FILTER_OPTIONS = ['all', 'approved', 'rejected', 'highest', 'debtors', 'deleted'];
 const USERS_PER_PAGE = 20;
 
 const compactButtonClassName = 'h-7 rounded-[var(--radius-sm)] px-2 text-[10px]';
@@ -201,7 +201,7 @@ const AdminUsers = () => {
   // Search and status are applied by the API, so results and counts span every
   // user page instead of only the users that happened to be loaded first.
   useEffect(() => {
-    const status = filter === 'approved' ? 'active' : '';
+    const status = filter === 'approved' ? 'active' : filter === 'rejected' ? 'rejected' : '';
     loadUsers({
       force: true,
       page: 1,
@@ -495,7 +495,7 @@ const AdminUsers = () => {
     try {
       const updated = await updateUserStatus(rejectTarget.id, 'rejected', actor);
       syncSelectedUser(updated);
-      addToast('تم رفض الحساب بنجاح.', 'success');
+      addToast('تم حظر الحساب وإضافته إلى القائمة السوداء.', 'success');
       setIsRejectModalOpen(false);
       setRejectTarget(null);
       await Promise.allSettled([
@@ -870,6 +870,7 @@ const AdminUsers = () => {
           >
             <option value="all">كل الحالات</option>
             <option value="approved">مفعّل</option>
+            <option value="rejected">القائمة السوداء</option>
             <option value="highest">أعلى رصيد حسب سعر الصرف</option>
             <option value="debtors">المديونين</option>
             <option value="deleted">محذوفة</option>
@@ -938,7 +939,7 @@ const AdminUsers = () => {
                     موافقة
                   </Button>
                   <Button size="sm" className={compactButtonClassName} variant="danger" onClick={() => askReject(entry)} disabled={isSubmitting}>
-                    رفض
+                    حظر
                   </Button>
                 </>
               )}
@@ -1026,7 +1027,7 @@ const AdminUsers = () => {
                           موافقة
                         </Button>
                         <Button size="sm" className={compactButtonClassName} variant="danger" onClick={() => askReject(entry)} disabled={isSubmitting}>
-                          رفض
+                          حظر
                         </Button>
                       </>
                     )}
@@ -1236,7 +1237,7 @@ const AdminUsers = () => {
             <div className="rounded-[var(--radius-lg)] border border-[color:rgb(var(--color-border-rgb)/0.84)] p-3.5">
               <p className="text-xs font-semibold text-[var(--color-text)]">قرار التفعيل</p>
               <p className="mt-1 text-xs leading-6 text-[var(--color-text-secondary)]">
-                اعتماد أو رفض الحساب مع تحديث حالته فورًا في النظام.
+                تفعيل الحساب أو حظره وإضافته إلى القائمة السوداء.
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {(isPendingAccountStatus(selectedUser?.status) || isRejectedAccountStatus(selectedUser?.status)) && (
@@ -1246,7 +1247,7 @@ const AdminUsers = () => {
                 )}
                 {(isPendingAccountStatus(selectedUser?.status) || isApprovedAccountStatus(selectedUser?.status)) && (
                   <Button className={compactButtonClassName} variant="danger" onClick={handleStatusToggleFromDetails} disabled={isSubmitting}>
-                    رفض الحساب
+                    حظر الحساب
                   </Button>
                 )}
               </div>
@@ -1275,6 +1276,21 @@ const AdminUsers = () => {
                       selectedUser?.isApiEnabled ? 'left-6' : 'left-1'
                     }`}
                   />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] p-3">
+                <span className="text-sm font-semibold">تفعيل صفحة ورابط الإحالة</span>
+                <button type="button" disabled={!canManageUsers} aria-pressed={Boolean(selectedUser?.referralEnabled)}
+                  className="rounded-lg border border-[var(--color-primary)] px-3 py-2 text-sm font-bold text-[var(--color-primary)] disabled:opacity-50"
+                  onClick={async () => {
+                    try {
+                      const enabled = !selectedUser.referralEnabled;
+                      const updated = await updateUserProfile(selectedUser.id, { referralEnabled: enabled }, actor);
+                      syncSelectedUser(updated || { ...selectedUser, referralEnabled: enabled });
+                    } catch (error) { addToast(error?.message || 'تعذر تحديث تفعيل الإحالة', 'error'); }
+                  }}>
+                  {selectedUser?.referralEnabled ? 'مفعّل' : 'غير مفعّل'}
                 </button>
               </div>
 
@@ -1541,20 +1557,20 @@ const AdminUsers = () => {
       <Modal
         isOpen={isRejectModalOpen}
         onClose={() => setIsRejectModalOpen(false)}
-        title="تأكيد رفض الحساب"
+        title="تأكيد حظر الحساب"
         footer={(
           <div className="flex justify-end gap-1.5">
             <Button variant="ghost" className={compactButtonClassName} onClick={() => setIsRejectModalOpen(false)}>
               إلغاء
             </Button>
             <Button variant="danger" className={compactButtonClassName} onClick={confirmReject} disabled={isSubmitting}>
-              تأكيد الرفض
+              تأكيد الحظر
             </Button>
           </div>
         )}
       >
         <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
-          هل أنت متأكد من رفض حساب <span className="font-semibold text-[var(--color-text)]">{rejectTarget?.name}</span>؟
+          هل أنت متأكد من حظر حساب <span className="font-semibold text-[var(--color-text)]">{rejectTarget?.name}</span>؟
           سيتم منعه من الوصول إلى الصفحات المحمية حتى تتم إعادة تفعيله يدويًا من الإدارة.
         </p>
       </Modal>

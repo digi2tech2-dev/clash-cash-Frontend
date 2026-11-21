@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -26,6 +26,8 @@ import {
 import { getDefaultRouteForRole } from '../../utils/authRoles';
 import { useToast } from '../ui/Toast';
 import { resolveUserAvatar } from '../../utils/avatar';
+import useSystemStore from '../../store/useSystemStore';
+import { buildWhatsAppLink, resolveSupportContacts } from '../../utils/whatsapp';
 
 const ACCOUNT_UI = {
   pending: {
@@ -38,9 +40,9 @@ const ACCOUNT_UI = {
   },
   rejected: {
     icon: ShieldX,
-    title: 'تم رفض الحساب',
-    description: 'عذرًا، هذا الحساب غير متاح حاليًا.',
-    badge: 'مرفوض',
+    title: 'تم حظر الحساب',
+    description: 'تم حظر حسابك. يرجى التواصل مع خدمة العملاء للمساعدة.',
+    badge: 'محظور',
     accent:
       'border-[color:rgb(var(--color-error-rgb)/0.22)] bg-[radial-gradient(circle_at_top,rgba(248,113,113,0.16),transparent_55%),rgba(255,255,255,0.82)] text-[var(--color-error)] dark:bg-[radial-gradient(circle_at_top,rgba(248,113,113,0.14),transparent_52%),rgba(15,23,42,0.9)]',
   },
@@ -69,6 +71,11 @@ const AccountAccessState = ({ variant = 'pending' }) => {
   const { user, blockedStatus, blockedUser, refreshProfile, logout, clearBlockedAccess } = useAuthStore();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const paymentSettings = useSystemStore((state) => state.paymentSettings);
+  const loadPaymentSettings = useSystemStore((state) => state.loadPaymentSettings);
+  useEffect(() => { if (variant === 'rejected') void loadPaymentSettings({ force: true }); }, [variant, loadPaymentSettings]);
+  const supportNumber = resolveSupportContacts(paymentSettings?.supportContacts)[0]?.number || paymentSettings?.whatsappNumber || '';
+  const supportLink = buildWhatsAppLink({ number: supportNumber });
 
   const currentStatus = normalizeAccountStatus(user?.status || blockedStatus || variant);
   const isAccessReady = isApprovedAccountStatus(currentStatus) && user;
@@ -195,6 +202,11 @@ const AccountAccessState = ({ variant = 'pending' }) => {
             )}
 
             <div className="flex flex-col gap-3">
+              {displayVariant === 'rejected' && supportLink && (
+                <a href={supportLink} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-[var(--color-primary)] px-4 py-3 text-sm font-bold text-white">
+                  {dir === 'rtl' ? 'التواصل مع خدمة العملاء' : 'Contact customer support'} <span dir="ltr">{supportNumber}</span>
+                </a>
+              )}
               {displayVariant === 'verification' ? (
                 <Button
                   type="button"
@@ -231,7 +243,7 @@ const AccountAccessState = ({ variant = 'pending' }) => {
                 <Button
                   type="button"
                   className="w-full"
-                  onClick={() => navigate('/auth', { replace: true })}
+                  onClick={() => { clearBlockedAccess?.(); navigate('/auth', { replace: true }); }}
                 >
                   <ArrowRight className={`h-4 w-4 ${dir === 'rtl' ? '' : 'rotate-180'}`} />
                   دخول

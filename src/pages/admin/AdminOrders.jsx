@@ -24,13 +24,12 @@ import useAuthStore from '../../store/useAuthStore';
 import useAdminStore from '../../store/useAdminStore';
 import useMediaStore from '../../store/useMediaStore';
 import useSystemStore from '../../store/useSystemStore';
+import apiClient from '../../services/client';
 import {
   filterOrders,
   enrichOrders,
   getManualOrderStatusLabel,
   summarizeOrders,
-  getProviderDisplayName,
-  PROVIDER_DISPLAY_NAMES,
 } from '../../utils/orders';
 import { formatNumber } from '../../utils/intl';
 import { cn } from '../../components/ui/Button';
@@ -224,6 +223,18 @@ const AdminOrders = () => {
   const [sortOrder, setSortOrder] = useState('newest');
   // New: provider filter
   const [providerFilter, setProviderFilter] = useState('all');
+  const providerFilterRef = useRef(providerFilter);
+  providerFilterRef.current = providerFilter;
+  const [availableProviders, setAvailableProviders] = useState([]);
+  useEffect(() => {
+    let active = true;
+    apiClient.orders.listProviders().then((providers) => {
+      if (active) setAvailableProviders(providers.filter((provider) => provider.supplierCode || provider.slug));
+    }).catch(() => {
+      if (active) addToast('تعذر تحميل قائمة الموردين.', 'error');
+    });
+    return () => { active = false; };
+  }, [addToast]);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [actionOrderId, setActionOrderId] = useState('');
   const [syncingOrderId, setSyncingOrderId] = useState('');
@@ -239,7 +250,7 @@ const AdminOrders = () => {
   });
 
   // ── Core page loader (stable, receives explicit params) ───────────────
-  const loadPage = useCallback(async ({ pg, lim, search, startDate, endDate }) => {
+  const loadPage = useCallback(async ({ pg, lim, search, startDate, endDate, provider }) => {
     setIsLoading(true);
     const trimmedSearch = String(search || '').trim();
     const userMatches = (useAdminStore.getState?.().users || [])
@@ -259,6 +270,7 @@ const AdminOrders = () => {
         userId: userMatches.length === 1 ? (userMatches[0].id || userMatches[0]._id || userMatches[0].userId) : undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
+        providerCode: provider && provider !== 'all' ? provider : undefined,
       }),
       storeActionsRef.current.loadUsers({ force: true }),
       storeActionsRef.current.loadProducts({ force: true }),
@@ -289,6 +301,7 @@ const AdminOrders = () => {
         search: trimmed,
         startDate: appliedStartDate,
         endDate: appliedEndDate,
+        provider: providerFilterRef.current,
       });
     }, 500);
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
@@ -315,9 +328,10 @@ const AdminOrders = () => {
       search: serverSearchTerm,
       startDate: appliedStartDate,
       endDate: appliedEndDate,
+      provider: providerFilter,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, appliedStartDate, appliedEndDate]); // serverSearchTerm changes are handled in the debounce effect above
+  }, [page, limit, appliedStartDate, appliedEndDate, providerFilter]); // serverSearchTerm changes are handled in the debounce effect above
 
   // ── Date range handlers ──────────────────────────────────────────────────
   const handleApplyDateFilter = useCallback(() => {
@@ -348,9 +362,8 @@ const AdminOrders = () => {
       typeFilter,
       dateFilter,
       sortOrder,
-      providerFilter,
     }),
-    [dateFilter, enrichedOrders, serverSearchTerm, sortOrder, statusFilter, typeFilter, providerFilter]
+    [dateFilter, enrichedOrders, serverSearchTerm, sortOrder, statusFilter, typeFilter]
   );
 
   const summary = useMemo(() => summarizeOrders(filteredOrders), [filteredOrders]);
@@ -369,12 +382,6 @@ const AdminOrders = () => {
   }, [getOrderById, searchParams]);
 
   const formatCount = (value) => formatNumber(value, locale);
-
-  // ── Provider dropdown options ─────────────────────────────────────────────
-  // Derived from the static PROVIDER_DISPLAY_NAMES map so the dropdown is
-  // always populated, even when the current page of (older) orders has no
-  // providerCode field yet.
-  const availableProviders = Object.keys(PROVIDER_DISPLAY_NAMES);
 
   // ── Pagination handlers ──────────────────────────────────────────────────
   const handlePageChange = useCallback((newPage) => {
@@ -594,9 +601,9 @@ const AdminOrders = () => {
             className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1.5 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-primary)] transition-colors"
           >
             <option value="all">{isArabic ? 'كل المزودين' : 'All providers'}</option>
-            {availableProviders.map((slug) => (
-              <option key={slug} value={slug}>
-                {getProviderDisplayName(slug, isArabic ? 'ar' : 'en')}
+            {availableProviders.map((provider) => (
+              <option key={provider.id} value={provider.supplierCode || provider.slug}>
+                {provider.supplierName || provider.name}
               </option>
             ))}
           </select>
