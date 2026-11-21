@@ -35,6 +35,13 @@ export const resolveImageUrl = (path) => {
     return trimmed;
   }
 
+  // In production the frontend API proxy is mounted at /api. Use that same
+  // proxy for uploaded media so image URLs reach Express even when the host
+  // only forwards /api (and does not separately forward /uploads).
+  if (API_BASE.startsWith('/') && trimmed.startsWith('/uploads/')) {
+    return `${API_BASE.replace(/\/+$/, '')}${trimmed}`;
+  }
+
   // Relative path — prepend backend origin
   return `${BACKEND_ORIGIN}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
 };

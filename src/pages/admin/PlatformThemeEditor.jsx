@@ -511,7 +511,7 @@ const copy = {
     noPaymentReady: 'تعليمات التحويل غير متاحة حتى يتصل التطبيق بالباك إند.',
     animatedArabic: 'النص العربي المتحرك', animatedArabicHint: 'تعديل النص الظاهر أسفل السلايدر متاح مجانًا (حتى 240 حرفًا).',
     sidebarTemplate: 'قالب السايدبار', sidebarTemplateHint: 'اختر شكل القائمة الجانبية وعاينها قبل حفظ المسودة ونشرها. جميع القوالب متاحة مجانًا.', sidebarDefault: 'الافتراضي', sidebarRoyal: 'ملكي ذهبي', sidebarGlass: 'زجاجي', sidebarAurora: 'شفق بنفسجي', sidebarSquare: 'مستطيل فحمي', sidebarRounded: 'دائري زمردي', sidebarPreviewBrand: 'AD', sidebarPreviewAccount: 'حساب المدير', sidebarPreviewItem: 'لوحة التحكم', ultraLocked: 'هذه الميزة متاحة مجانًا.',
-    platformName: 'اسم المنصة', logo: 'شعار المنصة', logoWidth: 'عرض الشعار', slides: 'صور السلايدر الرئيسية', targetBanner: 'صورة بانر بيع التارجت', imageHint: 'JPG أو PNG أو WebP، بحد أقصى 5MB', socialMedia: 'السوشيال ميديا', phoneNumber: 'رقم التليفون', whatsappLink: 'رابط واتساب', instagramLink: 'رابط إنستجرام', facebookLink: 'رابط فيسبوك', socialLinksHint: 'أدخل البيانات التي تريد إظهارها في السايدبار، واترك الحقول غير المستخدمة فارغة.',
+    platformName: 'اسم المنصة', logo: 'شعار المنصة', logoWidth: 'عرض الشعار', slides: 'صور السلايدر الرئيسية', targetBanner: 'صورة بانر بيع التارجت', imageHint: 'JPG أو PNG أو WebP حتى 20MB؛ سيتم ضغط الصورة تلقائيًا قبل الرفع.', socialMedia: 'السوشيال ميديا', phoneNumber: 'رقم التليفون', whatsappLink: 'رابط واتساب', instagramLink: 'رابط إنستجرام', facebookLink: 'رابط فيسبوك', socialLinksHint: 'أدخل البيانات التي تريد إظهارها في السايدبار، واترك الحقول غير المستخدمة فارغة.',
     upload: 'رفع صورة', remove: 'إزالة', sample: 'زر تجريبي', sampleText: 'هذه معاينة للألوان والخطوط والبطاقات في الوضع المحدد.',
     retry: 'إعادة المحاولة', partial: 'تعذر تحميل بعض بيانات الاشتراك أو السجل، ويمكنك تعديل الثيم.', loading: 'جارٍ التحميل...',
     unavailable: 'يتطلب المحرر الاتصال بالباك إند الحقيقي.', networkError: 'تعذر الاتصال بالخادم. تحقق من الاتصال وحاول مرة أخرى.',
@@ -566,7 +566,7 @@ const copy = {
     noPaymentReady: 'Transfer instructions require a backend connection.',
     animatedArabic: 'Animated Arabic text', animatedArabicHint: 'Edit the text below the slider for free (up to 240 characters).',
     sidebarTemplate: 'Sidebar template', sidebarTemplateHint: 'Choose and preview any sidebar template before saving and publishing. All templates are free.', sidebarDefault: 'Default', sidebarRoyal: 'Royal gold', sidebarGlass: 'Glass', sidebarAurora: 'Violet aurora', sidebarSquare: 'Charcoal square', sidebarRounded: 'Emerald rounded', sidebarPreviewBrand: 'AD', sidebarPreviewAccount: 'Admin account', sidebarPreviewItem: 'Dashboard', ultraLocked: 'This feature is free.',
-    platformName: 'Platform name', logo: 'Platform logo', logoWidth: 'Logo width', slides: 'Homepage slider images', targetBanner: 'Sell Target banner image', imageHint: 'JPG, PNG, or WebP up to 5MB', socialMedia: 'Social media', phoneNumber: 'Phone number', whatsappLink: 'WhatsApp link', instagramLink: 'Instagram link', facebookLink: 'Facebook link', socialLinksHint: 'Enter the details to show in the sidebar. Leave unused fields empty.',
+    platformName: 'Platform name', logo: 'Platform logo', logoWidth: 'Logo width', slides: 'Homepage slider images', targetBanner: 'Sell Target banner image', imageHint: 'JPG, PNG, or WebP up to 20MB; images are compressed before upload.', socialMedia: 'Social media', phoneNumber: 'Phone number', whatsappLink: 'WhatsApp link', instagramLink: 'Instagram link', facebookLink: 'Facebook link', socialLinksHint: 'Enter the details to show in the sidebar. Leave unused fields empty.',
     upload: 'Upload image', remove: 'Remove', sample: 'Sample button', sampleText: 'Preview colors, fonts, and cards in the selected mode.',
     retry: 'Retry', partial: 'Some subscription or history details could not be loaded; you can still edit.', loading: 'Loading...',
     unavailable: 'Connect the real backend to use this editor.', networkError: 'Cannot reach the server. Check your connection and retry.',
@@ -579,6 +579,7 @@ const dateText = (date, language) => date ? new Intl.DateTimeFormat(language ===
 const errorText = (error, t) => {
   const status = error?.response?.status;
   if (!status) return t.networkError;
+  if (status === 413) return t.imageHint;
   if (status === 401) return t.unauthorized;
   if (status === 403 && error?.response?.data?.code === 'THEME_PRO_REQUIRED') return t.freeLocked;
   if (status === 403 && error?.response?.data?.code === 'THEME_FREE_LIMIT') return t.freeWarning;
@@ -588,6 +589,64 @@ const errorText = (error, t) => {
   if (status === 404) return t.missingApi;
   return error?.response?.data?.message || t.failed;
 };
+
+const MAX_SOURCE_IMAGE_BYTES = 20 * 1024 * 1024;
+const MAX_COMPRESSED_IMAGE_BYTES = 900 * 1024;
+const imageToBlob = (canvas, quality) => new Promise((resolve, reject) => {
+  canvas.toBlob((blob) => {
+    if (blob) resolve(blob);
+    else reject(new Error('This browser could not encode the selected image.'));
+  }, 'image/webp', quality);
+});
+
+const prepareThemeImage = async (file) => {
+  if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    throw new Error('Choose a JPG, PNG or WebP image.');
+  }
+  if (file.size > MAX_SOURCE_IMAGE_BYTES) throw new Error('The selected image is larger than 20 MB.');
+
+  const bitmap = await createImageBitmap(file);
+  try {
+    const { width: sourceWidth, height: sourceHeight } = bitmap;
+    const smallestSide = Math.min(sourceWidth, sourceHeight);
+    if (smallestSide < 128 || Math.max(sourceWidth, sourceHeight) > 6000) {
+      throw new Error('Image dimensions must be between 128 and 6000 pixels.');
+    }
+    if (file.size <= MAX_COMPRESSED_IMAGE_BYTES) return file;
+
+    const scale = Math.min(1, 2400 / Math.max(sourceWidth, sourceHeight), smallestSide / 128);
+    let width = Math.max(128, Math.round(sourceWidth * scale));
+    let height = Math.max(128, Math.round(sourceHeight * scale));
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Could not prepare the selected image.');
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      canvas.width = width;
+      canvas.height = height;
+      context.clearRect(0, 0, width, height);
+      context.drawImage(bitmap, 0, 0, width, height);
+      const quality = Math.max(0.58, 0.92 - (attempt % 5) * 0.08);
+      const blob = await imageToBlob(canvas, quality);
+      if (blob.size <= MAX_COMPRESSED_IMAGE_BYTES || (attempt === 7 && blob.size <= 5 * 1024 * 1024)) {
+        const baseName = file.name.replace(/\.[^.]+$/, '') || 'platform-image';
+        return new File([blob], `${baseName}.webp`, { type: 'image/webp', lastModified: Date.now() });
+      }
+      width = Math.max(128, Math.round(width * 0.82));
+      height = Math.max(128, Math.round(height * 0.82));
+    }
+    throw new Error('Could not compress the image enough to upload it.');
+  } finally {
+    bitmap.close?.();
+  }
+};
+const ThemeImagePreview = ({ src, className, style, fallback }) => {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+  if (failed) return <div className="grid h-full w-full place-items-center rounded-lg bg-[var(--color-surface)] px-3 py-2 text-center text-xs text-[var(--color-text-secondary)]">{fallback}</div>;
+  return <img src={src} alt="" className={className} style={style} onError={() => setFailed(true)} />;
+};
+
 const Section = ({ title, icon: Icon, locked = false, children }) => <section className={card}>
   <h2 className="mb-4 flex items-center gap-2 text-base font-black text-[var(--color-text)]"><Icon className="h-5 w-5 text-[var(--color-primary)]" />{title}{locked && <LockKeyhole className="ms-auto h-4 w-4 text-amber-500" />}</h2>{children}
 </section>;
@@ -731,17 +790,18 @@ export default function PlatformThemeEditor({ previewOnly = false }) {
   };
   const upload = async (file, slot = null) => {
     if (!paid || previewOnly || !file) return;
-    if (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      addToast(t.imageHint, 'error'); return;
-    }
+    let preparedFile;
+    try { preparedFile = await prepareThemeImage(file); }
+    catch (cause) { addToast(cause?.message || t.failed, 'error'); return; }
     setBusy(true);
     try {
-      const result = await apiClient.platformTheme.uploadMedia(file);
+      const result = await apiClient.platformTheme.uploadMedia(preparedFile);
+      if (!result?.path) throw new Error(result?.message || t.failed);
       if (slot === null) updateBrand({ logoPath: result.path });
       else if (slot === 'targetBanner') updateBrand({ targetBannerPath: result.path });
       else setDraft((current) => ({ ...current, brand: { ...current.brand,
         slides: current.brand.slides.map((path, index) => index === slot ? result.path : path) } }));
-    } catch (cause) { addToast(errorText(cause, t), 'error'); }
+    } catch (cause) { addToast(cause?.response ? errorText(cause, t) : (cause?.message || t.failed), 'error'); }
     finally { setBusy(false); }
   };
   const saveContacts = async () => {
@@ -892,7 +952,7 @@ export default function PlatformThemeEditor({ previewOnly = false }) {
         </Section>}
         </>}
         {(previewOnly || ['branding', 'sidebar'].includes(activePage)) && <>
-        {['branding', 'preview'].includes(activePage) || previewOnly ? <Section icon={ImagePlus} title={t.branding} locked={!paid}><p className="mb-3 text-xs text-[var(--color-text-secondary)]">{t.imageHint}</p><label className="mb-4 block text-sm font-semibold">{t.platformName}<input type="text" maxLength={60} value={draft.brand.platformName || 'Clash Cash'} onChange={(event) => updateBrand({ platformName: event.target.value })} disabled={busy} className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)]" /></label><div className="grid gap-4 sm:grid-cols-2"><div className="rounded-xl border border-[var(--color-border)] p-3"><p className="mb-2 text-sm font-bold">{t.logo}</p>{draft.brand.logoPath && <div className="mb-2 flex h-28 items-center overflow-auto rounded-lg bg-[var(--color-surface)] p-2"><img src={resolveImageUrl(draft.brand.logoPath)} alt="" className="max-h-full shrink-0 object-contain" style={{ width: draft.brand.logoWidth }} /></div>}<label className={button}>{t.upload}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={!paid || busy} onChange={(event) => { upload(event.target.files?.[0]); event.target.value = ''; }} /></label>{draft.brand.logoPath && <button type="button" className={`${button} ms-2`} disabled={!paid} onClick={() => updateBrand({ logoPath: null })}>{t.remove}</button>}<label className="mt-3 block text-xs">{t.logoWidth}: {draft.brand.logoWidth}px<input type="range" min="80" max="300" step="4" className="mt-2 w-full" disabled={!paid} value={draft.brand.logoWidth} onChange={(event) => updateBrand({ logoWidth: Number(event.target.value) })} /></label></div><div className="rounded-xl border border-[var(--color-border)] p-3"><p className="mb-2 text-sm font-bold">{t.slides}</p><div className="grid grid-cols-2 gap-2">{draft.brand.slides.map((path, index) => <div key={index} className="rounded-lg border border-[var(--color-border)] p-2 text-center text-xs"><div className="mb-2 flex aspect-video items-center justify-center overflow-hidden bg-[var(--color-surface)]">{path ? <img src={resolveImageUrl(path)} alt="" className="h-full w-full object-cover" /> : `${index + 1}`}</div><label className={button}>{t.upload}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={!paid || busy} onChange={(event) => { upload(event.target.files?.[0], index); event.target.value = ''; }} /></label>{path && <button type="button" className="mt-1 block w-full text-rose-500" disabled={!paid} onClick={() => updateBrand({ slides: draft.brand.slides.map((old, slot) => slot === index ? null : old) })}>{t.remove}</button>}</div>)}</div></div></div></Section> : null}
+        {['branding', 'preview'].includes(activePage) || previewOnly ? <Section icon={ImagePlus} title={t.branding} locked={!paid}><p className="mb-3 text-xs text-[var(--color-text-secondary)]">{t.imageHint}</p><label className="mb-4 block text-sm font-semibold">{t.platformName}<input type="text" maxLength={60} value={draft.brand.platformName || 'Clash Cash'} onChange={(event) => updateBrand({ platformName: event.target.value })} disabled={busy} className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)]" /></label><div className="grid gap-4 sm:grid-cols-2"><div className="rounded-xl border border-[var(--color-border)] p-3"><p className="mb-2 text-sm font-bold">{t.logo}</p>{draft.brand.logoPath && <div className="mb-2 flex h-28 items-center overflow-auto rounded-lg bg-[var(--color-surface)] p-2"><ThemeImagePreview src={resolveImageUrl(draft.brand.logoPath)} fallback={t.logo} className="max-h-full shrink-0 object-contain" style={{ width: draft.brand.logoWidth }} /></div>}<label className={button}>{t.upload}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={!paid || busy} onChange={(event) => { upload(event.target.files?.[0]); event.target.value = ''; }} /></label>{draft.brand.logoPath && <button type="button" className={`${button} ms-2`} disabled={!paid} onClick={() => updateBrand({ logoPath: null })}>{t.remove}</button>}<label className="mt-3 block text-xs">{t.logoWidth}: {draft.brand.logoWidth}px<input type="range" min="80" max="300" step="4" className="mt-2 w-full" disabled={!paid} value={draft.brand.logoWidth} onChange={(event) => updateBrand({ logoWidth: Number(event.target.value) })} /></label></div><div className="rounded-xl border border-[var(--color-border)] p-3"><p className="mb-2 text-sm font-bold">{t.slides}</p><div className="grid grid-cols-2 gap-2">{draft.brand.slides.map((path, index) => <div key={index} className="rounded-lg border border-[var(--color-border)] p-2 text-center text-xs"><div className="mb-2 flex aspect-video items-center justify-center overflow-hidden bg-[var(--color-surface)]">{path ? <ThemeImagePreview src={resolveImageUrl(path)} fallback={t.failed} className="h-full w-full object-cover" /> : `${index + 1}`}</div><label className={button}>{t.upload}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={!paid || busy} onChange={(event) => { upload(event.target.files?.[0], index); event.target.value = ''; }} /></label>{path && <button type="button" className="mt-1 block w-full text-rose-500" disabled={!paid} onClick={() => updateBrand({ slides: draft.brand.slides.map((old, slot) => slot === index ? null : old) })}>{t.remove}</button>}</div>)}</div></div></div></Section> : null}
         {['branding', 'preview'].includes(activePage) || previewOnly ? <Section icon={MessageCircle} title={t.socialMedia}>
           <p className="mb-3 text-xs text-[var(--color-text-secondary)]">{t.socialLinksHint}</p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -906,7 +966,7 @@ export default function PlatformThemeEditor({ previewOnly = false }) {
           <p className="mb-3 text-xs text-[var(--color-text-secondary)]">{t.imageHint}</p>
           <div className="rounded-xl border border-[var(--color-border)] p-3">
             <div className="mb-3 flex aspect-[5/1] items-center justify-center overflow-hidden rounded-lg bg-[var(--color-surface)]">
-              {draft.brand.targetBannerPath ? <img src={resolveImageUrl(draft.brand.targetBannerPath)} alt="" className="h-full w-full object-cover" /> : <span className="text-xs text-[var(--color-text-secondary)]">{t.targetBanner}</span>}
+              {draft.brand.targetBannerPath ? <ThemeImagePreview src={resolveImageUrl(draft.brand.targetBannerPath)} fallback={t.targetBanner} className="h-full w-full object-cover" /> : <span className="text-xs text-[var(--color-text-secondary)]">{t.targetBanner}</span>}
             </div>
             <label className={button}>{t.upload}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={!paid || busy} onChange={(event) => { upload(event.target.files?.[0], 'targetBanner'); event.target.value = ''; }} /></label>
             {draft.brand.targetBannerPath && <button type="button" className={`${button} ms-2`} disabled={!paid} onClick={() => updateBrand({ targetBannerPath: null })}>{t.remove}</button>}

@@ -4,6 +4,7 @@ import { isLitePerformanceMode } from '../../utils/performanceMode';
 
 const HeroSlider = ({ slides }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [slideImageFailed, setSlideImageFailed] = useState(false);
   const dragStartX = useRef(null);
   const { i18n } = useTranslation();
   const hasMultipleSlides = (slides?.length || 0) > 1;
@@ -42,9 +43,9 @@ const HeroSlider = ({ slides }) => {
     changeSlide(distance < 0 ? 1 : -1);
   };
 
-  if (!slides?.length) return null;
-
-  const slide = slides[currentSlide % slides.length];
+  const slide = slides?.length ? slides[currentSlide % slides.length] : null;
+  useEffect(() => setSlideImageFailed(false), [slide?.image]);
+  if (!slide) return null;
   const SlideFrame = slide.href ? 'a' : 'div';
   const slideFrameProps = slide.href
     ? {
@@ -66,16 +67,19 @@ const HeroSlider = ({ slides }) => {
         <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.13),transparent_34%)]" />
         <div key={slide.id || currentSlide} className={`absolute inset-0 ${performanceLite ? '' : 'animate-[fade-in_0.7s_ease-out] motion-reduce:animate-none'}`}>
           <SlideFrame {...slideFrameProps} className="block h-full w-full">
-            <img
-              src={slide.image}
-              alt={slide.alt || ''}
-              loading="eager"
-              decoding="async"
-              fetchPriority="high"
-              draggable="false"
-              sizes="100vw"
-              className="block h-full w-full object-cover"
-            />
+            {slideImageFailed && !slide.fallbackImage
+              ? <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] text-sm text-[var(--color-text-secondary)]">{slide.title || ''}</div>
+              : <img
+                src={slideImageFailed ? slide.fallbackImage : slide.image}
+                alt={slide.alt || ''}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                draggable="false"
+                sizes="100vw"
+                className="block h-full w-full object-cover"
+                onError={() => setSlideImageFailed(true)}
+              />}
           </SlideFrame>
         </div>
 

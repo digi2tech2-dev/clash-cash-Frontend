@@ -310,7 +310,7 @@ const PublicCatalog = () => {
       { id: 'landing-slide-5', image: slideFiveImage, title: '' },
     ];
     return defaults.map((slide, index) => platformBrand.slides[index]
-      ? { ...slide, image: resolveImageUrl(platformBrand.slides[index]) } : slide);
+      ? { ...slide, fallbackImage: slide.image, image: resolveImageUrl(platformBrand.slides[index]) } : slide);
   }, [platformBrand.slides]);
 
   const catalogProducts = useMemo(
