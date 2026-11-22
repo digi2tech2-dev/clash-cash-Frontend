@@ -224,22 +224,9 @@ export const isSiteWalletPaymentMethod = (methodOrValue) => {
     .some((token) => ['site wallet', 'site_wallet', 'wallet', 'محفظة الموقع', 'محفظه الموقع'].includes(token)));
 };
 
-const TARGET_REQUIRED_PAYMENT_METHODS = [
-  { id: 'vodafone cash', name: 'فودافون كاش', type: 'mobile_wallet', isActive: true },
-  { id: 'etisalat cash', name: 'اتصالات كاش', type: 'mobile_wallet', isActive: true },
-  { id: 'orange cash', name: 'أورانج كاش', type: 'mobile_wallet', isActive: true },
-  { id: 'instapay', name: 'إنستا باي', type: 'mobile_wallet', isActive: true },
-  { id: 'site_wallet', name: 'محفظة الموقع', type: 'site_wallet', isActive: true },
-];
-
-export const getTargetPaymentMethods = (settings) => {
-  const activeMethods = getActivePaymentMethods(settings, { fallbackToDefault: true });
-
-  return TARGET_REQUIRED_PAYMENT_METHODS.map((required, index) => {
-    const existing = activeMethods.find((method) => isPaymentMethodAllowed(method, [required.id, required.name]));
-    return normalizePaymentMethod(existing || required, index);
-  });
-};
+// Only methods activated by the admin are available for target payouts.
+export const getTargetPaymentMethods = (settings) =>
+  getActivePaymentMethods(settings, { fallbackToDefault: false });
 
 export const findPaymentMethodById = (settings, methodId, options = {}) => {
   const targetId = String(methodId || '').trim();
