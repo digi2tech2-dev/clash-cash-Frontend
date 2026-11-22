@@ -4136,14 +4136,14 @@ const realApi = {
     },
 
     create: async (payload = {}) => {
-      const formData = buildTargetAppFormData(await prepareTargetAppPayload(payload));
+      const formData = buildTargetAppFormData(payload);
       const res = await http.post('/admin/target-apps', formData);
       const data = unwrap(res);
       return normaliseTargetApp(data?.app || data);
     },
 
     update: async (id, payload = {}) => {
-      const formData = buildTargetAppFormData(await prepareTargetAppPayload(payload), { partial: true });
+      const formData = buildTargetAppFormData(payload, { partial: true });
       const res = await http.patch(`/admin/target-apps/${id}`, formData);
       const data = unwrap(res);
       return normaliseTargetApp(data?.app || data);
